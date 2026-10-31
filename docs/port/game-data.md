@@ -3,7 +3,7 @@
 [← Documentation index](../README.md) · [Source index](../source-index.md)
 
 The game data is not part of the source tree: `port/boards/playdate/Source/id1/pak0.pak` (and, for the
-release build, `pak0_demo.pak` next to it; see [which `pak0.pak` the `.pdx` gets](../build-system.md#which-pak0pak-the-pdx-gets)).
+demo build, `pak0_demo.pak` next to it; see [which `pak0.pak` the `.pdx` gets](../build-system.md#which-pak0pak-the-pdx-gets)).
 Two kinds of data work:
 
 | | Shareware (`pak0_demo.pak`) | 2021 re-release (`pak0.pak`) |

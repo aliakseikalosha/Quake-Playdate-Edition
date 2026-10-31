@@ -41,7 +41,7 @@ Entry point, frame loop and input. Everything the Playdate OS touches goes throu
 
 `update()` is the callback registered with `setUpdateCallback`. It runs a four-state machine
 (`ST_SPLASH`, `ST_INIT`, `ST_RUN`, `ST_STOPPED`) because loading `pak0.pak` takes a while and the
-user must see something first. The splash is the launcher's own `launchImage` (`launcher/launchImage.pdi`, made by [`gen-launcher-assets.py`](../tools.md#scriptsgen-launcher-assetspy)), so the screen stays the same from the launch animation until Quake's first frame; without it, a plain "Quake / Loading..." message:
+user must see something first. The splash is the launcher's own `launchImage` (`launcher/launchImage.pdi`, from the [launcher art](../build-system.md#launcher-art-art)), so the screen stays the same from the launch animation until Quake's first frame; without it, a plain "Quake / Loading..." message:
 
 ```c
 static int update(void *ud)
@@ -493,7 +493,7 @@ mkdir adpcm && for f in Quake*.wav; do ffmpeg -i "$f" -acodec adpcm_ima_wav "adp
 # keep the PCM originals somewhere outside Source/ (pdc bundles everything in it), then move adpcm/*.wav here
 ```
 
-**Release builds** (`-DPD_RELEASE=ON` with a `pak0_demo.pak`) leave `id1/music` out of the `.pdx`, like the full `pak0.pak`
+**Demo builds** (`scripts/release-device.sh`, `-DPD_RELEASE=ON` with a `pak0_demo.pak`) leave `id1/music` out of the `.pdx`, like the full `pak0.pak` and `pak1.pak`; the full release build keeps it
 ([which `pak0.pak` the `.pdx` gets](../build-system.md#which-pak0pak-the-pdx-gets)).
 
 > **Not measured on the device.** The Simulator ran the real game (the title demo's track message starts track 2) and a

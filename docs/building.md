@@ -8,20 +8,20 @@ Requires the [Playdate SDK](https://play.date/dev/) (`PLAYDATE_SDK_PATH` set) an
 
 Game data is not included. Copy your `pak0.pak` (the freely distributable shareware one is fine) to
 `port/boards/playdate/Source/id1/pak0.pak` before building, or into the game's Data folder at `id1/`.
-If you also put the shareware pak there as `Source/id1/pak0_demo.pak`, the release build
-(`scripts/release-device.sh`) ships it as `id1/pak0.pak` in place of your `pak0.pak`; every other build leaves it out.
+If you also put the shareware pak there as `Source/id1/pak0_demo.pak`, the demo build
+(`scripts/release-device.sh`, without `full`) ships it as `id1/pak0.pak` in place of your `pak0.pak`; every other build leaves it out.
 The shareware pak and the 2021 re-release's `pak0.pak` both work. The re-release's has no `default.cfg`, so the engine
 falls back to a built-in copy (`winquake/defaultcfg.h`) and the D-pad and buttons are bound; its QuakeC also needs a
 `campaign` cvar and `MOVETYPE_BOUNCEMISSILE` for gibs, and a large level could crash the renderer's model cache.
 All of that is handled; see [Game data](port/game-data.md).
 
 Mods and the mission packs go in folders next to `id1` (in `Source/` or the Data folder) and are picked in the main menu's **Mods**;
-see [Mods and mission packs](port/mods.md). A shareware release build leaves them out of the `.pdx`.
+see [Mods and mission packs](port/mods.md). The demo build leaves them out of the `.pdx`.
 
 Music is optional: the CD tracks as `Quake02.wav` ... `Quake11.wav` (the re-release's names) in `port/boards/playdate/Source/id1/music/`
 play as the levels' music, streamed from the `.pdx`. As PCM the ten tracks are about 590 MB; as IMA ADPCM they are about 150 MB (27-54 dB signal-to-noise against the PCM),
 see [`cd_pd.c`](port/playdate.md#cd_pdc) for the `ffmpeg` command.
-The release build leaves the music out together with the full `pak0.pak`.
+The demo build leaves the music out together with the full `pak0.pak` and `pak1.pak`.
 
 ```shell
 git clone https://github.com/aliakseikalosha/quake-playdate && cd quake-playdate
@@ -35,6 +35,15 @@ cd ..
 mkdir build-dev && cd build-dev
 cmake -DCMAKE_TOOLCHAIN_FILE=../port/boards/playdate/toolchain.cmake -DBOARD_NAME=playdate .. && make
 ```
+
+Release builds, clean and optimised, each as a `.pdx` and a `.zip` ready to sideload or upload (also the VS Code tasks **Playdate: demo build (device)** and **Playdate: release build (device)**):
+
+```shell
+scripts/release-device.sh        # build-release/Quake-<version>-demo.pdx, .zip: the shareware, the one to share
+scripts/release-device.sh full   # build-release-full/Quake-<version>-full.pdx, .zip: everything in Source/
+```
+
+`<version>` is the `version=` line of `Source/pdxinfo`. Details in [Scripts and tools](tools.md#scriptsrelease-devicesh).
 
 Every build gets the next build number: after `pdc`, `port/boards/playdate/pdx_buildnumber.cmake` writes it into the built `.pdx`'s `pdxinfo` (`buildNumber=`). The last number handed out is kept in `port/boards/playdate/.build_number` (not in git, shared by the device, simulator and profiling build directories), so `Source/pdxinfo` stays untouched; the count continues from whichever is larger, that file or the `buildNumber` in `Source/pdxinfo`. A build with nothing to recompile keeps its number.
 

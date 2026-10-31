@@ -5,7 +5,8 @@
 # Runs after pdc (POST_BUILD), which bundles everything in Source/, so Source/id1/ can hold both the
 # full pak0.pak and the shareware pak0_demo.pak:
 #   RELEASE on   pak0_demo.pak, if there is one, becomes id1/pak0.pak in the .pdx (replacing any
-#                pak0.pak) and id1/music/ is left out of it (the shareware has no music, and the
+#                pak0.pak), the registered game's id1/pak1.pak (and any later pak) and id1/music/
+#                are left out of it (the shareware has no music, and the
 #                re-release's tracks are not redistributable), and so is every other game folder
 #                (mods and mission packs in Source/: the shareware does not run mods, and the
 #                mission packs are not redistributable either); without a pak0_demo.pak the .pdx
@@ -30,6 +31,13 @@ if(RELEASE)
 	file(REMOVE "${id1}/pak0.pak")
 	file(RENAME "${demo}" "${id1}/pak0.pak")
 	message(STATUS "release: pak0_demo.pak is id1/pak0.pak")
+	# the registered episodes: with them the shareware pak0.pak would run as the full game
+	file(GLOB later_paks "${id1}/pak[1-9]*.pak")
+	foreach(pak ${later_paks})
+		get_filename_component(name "${pak}" NAME)
+		file(REMOVE "${pak}")
+		message(STATUS "release: id1/${name} left out of the .pdx")
+	endforeach()
 	file(REMOVE_RECURSE "${id1}/music")
 	message(STATUS "release: id1/music left out of the .pdx")
 	# game folders as the Mods menu sees them (winquake/menu.c, M_ModsCheckEntry)

@@ -81,7 +81,7 @@ One frame (single player), in `Host_Frame`: read buttons → run console command
 | [Game data](port/game-data.md) | The shareware and the re-release `pak0.pak`: the built-in `default.cfg`, unused cvars, `MOVETYPE_BOUNCEMISSILE`, the alias setup cache fix |
 | [Mods and mission packs](port/mods.md) | Game folders next to `id1`: the Mods menu, `game.txt`, launch arguments, the mission packs' weapons and autofire, the release build, what was tested |
 | [Playdate board](port/playdate.md) | `main.c`, `display.c`, `bluenoise.h`, `fio.c`, `pd_stdio.c`, `pd_compat.h`, `pd_port.h`, `keyqueue.*`, `autofire.*`, `weapons.*`, `snd.c`, `cd_pd.c`, `pdprof.c`, `.gitignore` |
-| [Scripts and tools](tools.md) | `scripts/*` (release build, install, bench, report, blue noise, the source index generator) and `tools/hostcheck/*` |
+| [Scripts and tools](tools.md) | `scripts/*` (release and demo builds, install, bench, report, launcher assets, blue noise, the source index generator) and `tools/hostcheck/*` |
 
 ### The engine (`winquake/`)
 

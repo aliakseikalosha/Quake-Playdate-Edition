@@ -222,10 +222,11 @@ cmake -DPDXINFO=build-dev/quake_DEVICE.pdx/pdxinfo \
 ### Release build
 
 ```shell
-scripts/release-device.sh        # or the VS Code task "Playdate: release build (device)"
+scripts/release-device.sh        # the shareware demo, or the VS Code task "Playdate: demo build (device)"
+scripts/release-device.sh full   # the full game, or the VS Code task "Playdate: release build (device)"
 ```
 
-A clean Release build of the device `.pdx` in `build-release/` (no profiler or benchmark), with a new build number: the number appears in the built `pdxinfo`
+A clean Release build of the device `.pdx` (no profiler or benchmark) as `build-release/Quake-<version>-demo.pdx` (the shareware pak, no `pak1.pak`, no music, no mods) or `build-release-full/Quake-<version>-full.pdx` (the full game: `Source/` as it is), each also zipped (`.zip` next to it), with a new build number: the number appears in the built `pdxinfo`
 and is also written to `Source/pdxinfo`, so the release is recorded in the source tree. Details in [Scripts and tools](tools.md#scriptsrelease-devicesh).
 
 The script configures with `-DPD_RELEASE=ON`, which makes the release ship the shareware data (see [`Source/`](#source) below).
@@ -241,17 +242,37 @@ the SDK's own `C_API/buildsupport/arm.cmake`. Omit it and you get the Simulator 
 | Path | Content |
 | --- | --- |
 | `Source/pdxinfo` | Game metadata: `name`, `author`, `bundleID`, `version`, `buildNumber`; `imagePath=launcher` and `launchSoundPath=launcher/launch` point at the launcher assets. |
-| `Source/launcher/` | The launcher's `card.png`, `card-pressed.png`, `icon.png`, `launchImage.png`, `wrapping-pattern.png` and `launch.wav`, made from `pak0.pak` by [`gen-launcher-assets.py`](tools.md#scriptsgen-launcher-assetspy). **Not in git** (derived from the game data); the CMake configure step makes them when `card.png` is missing. |
+| `Source/launcher/` | The launcher's `card.png`, `card-pressed.png`, `icon.png`, `launchImage.png`, `wrapping-pattern.png` (exported from the [launcher art](#launcher-art-art) in `Art/`) and `launch.wav` (Quake's ammo pickup, from [`gen-launcher-assets.py`](tools.md#scriptsgen-launcher-assetspy)). `launchImage` is also the game's own splash while it loads ([`main.c`](port/playdate.md#state-machine)). In git (the one folder of `Source/` that is): see below. |
 | `Source/id1/pak0.pak` | Quake game data. **Not in git** and not redistributable; copy your own (the shareware one is fine). |
 | `Source/id1/music/Quake02.wav` ... `Quake11.wav` | Optional: the music (CD tracks 2-11), see [`cd_pd.c`](port/playdate.md#cd_pdc). `pdc` turns them into `.pda`; the re-release's ten tracks are about 590 MB as PCM and about 150 MB as ADPCM (use ADPCM). |
 | `Source/id1/pak0_demo.pak` | Optional: the shareware `pak0.pak` under another name. With `-DPD_RELEASE=ON` (`scripts/release-device.sh`) the built `.pdx` gets it as `id1/pak0.pak`, replacing `pak0.pak`; in every other build it is left out of the `.pdx`. |
 | `Source/pdex.elf` etc. | Build products copied in by `playdate_game.cmake` (git-ignored). |
 
+### Launcher art (`Art/`)
+
+The launcher images are drawn in [Aseprite](https://www.aseprite.org/) and exported, 1-bit and at the sizes `pdxinfo`'s `imagePath` requires, to `Source/launcher/`:
+
+| File | Exported to | Size |
+| --- | --- | --- |
+| `Art/card.aseprite` | `card.png`, `card-pressed.png` | 350×155 |
+| `Art/icon.aseprite` | `icon.png` | 32×32 |
+| `Art/launchImage.aseprite` | `launchImage.png` | 400×240 |
+| `Art/wrapping-pattern.aseprite` | `wrapping-pattern.png` | 400×240 |
+| `Art/card.png` | an earlier export of the card | 350×155 |
+| `Art/Banner.aseprite`, `Banner.png` | the store page banner (not in the `.pdx`) | 960×400 |
+| `Art/ItchCoverImage.aseprite`, `ItchCoverImage.png` | the itch.io cover image (not in the `.pdx`) | 630×500 |
+
+The exports are committed in `Source/launcher/` together with `launch.wav`
+(`port/boards/playdate/.gitignore` ignores every folder of `Source/` except this one), so a fresh clone
+builds with them: after changing a picture in `Art/`, export it there and commit both. If any of the six
+files is missing, the CMake configure step runs [`gen-launcher-assets.py`](tools.md#scriptsgen-launcher-assetspy),
+which makes it from `pak0.pak` (a first-draft image, or the sound) and never replaces an image that is there.
+
 `DOS-CONFIG.CFG.bak` in the same directory is a stray backup of a DOS-era Quake config file
 and is not used by the build.
 
 [`port/boards/playdate/.gitignore`](../port/boards/playdate/.gitignore) keeps the generated and non-redistributable
-files out of git: `Source/pdex.*` (build products), `Source/id1/` (the game data), every other folder in `Source/` (mods, mission packs, `launcher/`) and `.build_number`.
+files out of git: `Source/pdex.*` (build products), `Source/id1/` (the game data), every other folder in `Source/` (mods, mission packs) except `launcher/`, and `.build_number`.
 
 ### Which pak0.pak the `.pdx` gets
 
@@ -261,12 +282,12 @@ and works on the built `.pdx` only; `Source/id1/` is never touched:
 
 | Build | `pak0_demo.pak` exists | In the `.pdx` |
 | --- | --- | --- |
-| `PD_RELEASE=ON` | yes | `id1/pak0.pak` is `pak0_demo.pak`; there is no `pak0_demo.pak`, no `id1/music` and no other game folder (mods, mission packs: a folder with a `.pak`, `progs.dat`, `maps/`, `progs/`, `gfx/` or `sound/`, as the [Mods menu](port/mods.md) sees them) |
+| `PD_RELEASE=ON` | yes | `id1/pak0.pak` is `pak0_demo.pak`; there is no `pak0_demo.pak`, no `id1/pak1.pak` (the registered episodes), no `id1/music` and no other game folder (mods, mission packs: a folder with a `.pak`, `progs.dat`, `maps/`, `progs/`, `gfx/` or `sound/`, as the [Mods menu](port/mods.md) sees them) |
 | `PD_RELEASE=ON` | no | `id1/pak0.pak`, `id1/music` and the game folders as in `Source/` |
 | `PD_RELEASE=OFF` (default) | either | `id1/pak0.pak` as in `Source/id1/`; `pak0_demo.pak` is deleted from the `.pdx` |
 
 ```shell
-cmake -DPDX=build-release/quake_DEVICE.pdx -DRELEASE=ON -P port/boards/playdate/pdx_pak.cmake   # by hand, on a built .pdx
+cmake -DPDX=build-dev/quake_DEVICE.pdx -DRELEASE=ON -P port/boards/playdate/pdx_pak.cmake   # by hand, on a built .pdx
 ```
 
 ## Removed boards
@@ -289,6 +310,6 @@ The engine's desktop networking (`net_dgrm.c`, `net_udp.c`, `net_bsd.c`) is Quak
 ## Editor integration
 
 [`.vscode/tasks.json`](../.vscode/tasks.json) wraps the common builds
-(`Playdate: build (simulator, debug)`, `Playdate: build (device)`, `Playdate: release build (device)`, `Install on device (USB)`);
+(`Playdate: build (simulator, debug)`, `Playdate: build (device)`, `Playdate: release build (device)`, `Playdate: demo build (device)`, `Install on device (USB)`);
 [`.vscode/launch.json`](../.vscode/launch.json) launches the Playdate Simulator under CodeLLDB
 against `build-sim-debug/quake.pdx`. See [Scripts and tools](tools.md) for `release-device.sh` and `install-device.sh`.

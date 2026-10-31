@@ -2,7 +2,7 @@
 
 [← Documentation index](README.md)
 
-Every file in the repository (209 files, 153 of them C, header or assembly source), with what it does, whether it is built, and a link to its detailed description. The **File** column opens the source; the **Docs** column opens the section that describes it. Names in the descriptions are links to the related files' sections, so you can follow a call from one file to the next.
+Every file in the repository (224 files, 153 of them C, header or assembly source), with what it does, whether it is built, and a link to its detailed description. The **File** column opens the source; the **Docs** column opens the section that describes it. Names in the descriptions are links to the related files' sections, so you can follow a call from one file to the next.
 
 - Looking for a file by name? Jump to [Find a file by name](#find-a-file-by-name).
 - Looking for what to read first? See [Start here](README.md#start-here) in the index.
@@ -68,10 +68,10 @@ Build entry point, licence and editor configuration.
 | File | Lines | Built | What it does | Docs |
 | --- | ---: | --- | --- | --- |
 | [`CMakeLists.txt`](../CMakeLists.txt) | 11 | build | Top-level build: selects the board, sets the global flags, adds [`winquake/CMakeLists.txt`](build-system.md#winquakecmakeliststxt-the-engine) and [`port/CMakeLists.txt`](build-system.md#portcmakeliststxt-shared-platform-layer). | [build](build-system.md#top-level-cmakeliststxt) |
-| [`README.md`](../README.md) | 54 | doc | The project overview: what it is, controls, and links to building and the guides in `docs/`. | [README](../README.md) |
+| [`README.md`](../README.md) | 51 | doc | The project overview: what it is, controls, and links to building and the guides in `docs/`. | [README](../README.md) |
 | [`gpl-2.0.txt`](../gpl-2.0.txt) | 339 | licence | The GNU GPL v2 text; Quake's source is released under it. | — |
 | [`.gitignore`](../.gitignore) | 8 | config | Keeps `build-*/`, `bench-results/` and `tools/hostcheck/out/` out of git. | [docs index](README.md#not-documented) |
-| [`.vscode/tasks.json`](../.vscode/tasks.json) | 56 | editor | VS Code tasks: simulator (debug) build, device build, release build, install over USB. | [build](build-system.md#editor-integration) |
+| [`.vscode/tasks.json`](../.vscode/tasks.json) | 64 | editor | VS Code tasks: simulator (debug) build, device build, release (full) and demo builds, install over USB. | [build](build-system.md#editor-integration) |
 | [`.vscode/launch.json`](../.vscode/launch.json) | 19 | editor | Launches the Playdate Simulator under CodeLLDB against `build-sim-debug/quake.pdx`. | [build](build-system.md#editor-integration) |
 
 ## Board interface (`include/`)
@@ -101,7 +101,7 @@ Everything that touches the Playdate OS and its C API. Overview: [Playdate board
 
 | File | Lines | Built | What it does | Docs |
 | --- | ---: | --- | --- | --- |
-| [`main.c`](../port/boards/playdate/main.c) | 512 | always | The Playdate entry point: `eventHandler`, the update callback and its state machine, input mapping (D-pad, buttons, crank), the system menu, time and heap hooks. | [playdate](port/playdate.md#mainc) |
+| [`main.c`](../port/boards/playdate/main.c) | 529 | always | The Playdate entry point: `eventHandler`, the update callback and its state machine, input mapping (D-pad, buttons, crank), the system menu, time and heap hooks. | [playdate](port/playdate.md#mainc) |
 | [`display.c`](../port/boards/playdate/display.c) | 769 | always | Turns the 8-bit paletted frame into the 1-bit LCD frame: luminance, the four dithering modes (`pd_dither`), the half-resolution hand-over and redraw bookkeeping for interlacing. | [playdate](port/playdate.md#displayc) |
 | [`bluenoise.h`](../port/boards/playdate/bluenoise.h) | 37 | header | The generated 32×32 blue-noise threshold tile used by the blue-noise dither mode; made by [`gen-bluenoise.py`](tools.md#scriptsgen-bluenoisepy). | [playdate](port/playdate.md#bluenoiseh) |
 | [`fio.c`](../port/boards/playdate/fio.c) | 203 | always | `Sys_File*` on the Playdate file API: reads try the Data folder, then the `.pdx` bundle; writes go to the Data folder. | [playdate](port/playdate.md#fioc) |
@@ -118,21 +118,43 @@ Everything that touches the Playdate OS and its C API. Overview: [Playdate board
 | [`cd_pd.c`](../port/boards/playdate/cd_pd.c) | 258 | always | CD audio: track *N* is `id1/music/QuakeNN`, streamed by a `FilePlayer`; Music on/off (`bgmenabled`), volume, game pause, the system menu, and the `cd` command. Implements [`cdaudio.h`](engine/platform-interfaces.md#cdaudioh). | [playdate](port/playdate.md#cd_pdc) |
 | [`pdprof.c`](../port/boards/playdate/pdprof.c) | 1249 | profile | The on-device profiler: section timings, counters, stack probes, CPU/memory micro-benchmarks and the timedemo benchmark driver, written to `prof.csv`. Macros in [`pdprof.h`](engine/perf-infrastructure.md#pdprofh). | [playdate](port/playdate.md#pdprofc) |
 
+## Launcher art (`Art/`)
+
+Aseprite sources of the launcher images and the store art. Details: [Launcher art](build-system.md#launcher-art-art).
+
+| File | Lines | Built | What it does | Docs |
+| --- | ---: | --- | --- | --- |
+| [`card.aseprite`](../Art/card.aseprite) | 26 | art | The launcher card (350×155), exported as `Source/launcher/card.png` and `card-pressed.png`. | [build](build-system.md#launcher-art-art) |
+| [`card.png`](../Art/card.png) | 163 | art | An earlier export of the card. | [build](build-system.md#launcher-art-art) |
+| [`icon.aseprite`](../Art/icon.aseprite) | 4 | art | The list-view icon (32×32), exported as `Source/launcher/icon.png`. | [build](build-system.md#launcher-art-art) |
+| [`launchImage.aseprite`](../Art/launchImage.aseprite) | 296 | art | The launch image (400×240), exported as `Source/launcher/launchImage.png`; also the splash while the game loads. | [build](build-system.md#launcher-art-art) |
+| [`wrapping-pattern.aseprite`](../Art/wrapping-pattern.aseprite) | 19 | art | The wrapping paper of a newly downloaded copy (400×240), exported as `Source/launcher/wrapping-pattern.png`. | [build](build-system.md#launcher-art-art) |
+| [`Banner.aseprite`](../Art/Banner.aseprite) | 464 | art | The store page banner (960×400). | [build](build-system.md#launcher-art-art) |
+| [`Banner.png`](../Art/Banner.png) | 745 | art | Its export. | [build](build-system.md#launcher-art-art) |
+| [`ItchCoverImage.aseprite`](../Art/ItchCoverImage.aseprite) | 727 | art | The itch.io cover image (630×500). | [build](build-system.md#launcher-art-art) |
+| [`ItchCoverImage.png`](../Art/ItchCoverImage.png) | 1220 | art | Its export. | [build](build-system.md#launcher-art-art) |
+
 ## Playdate board: build files and data
 
 How the `.pdx` is configured, built and packaged. Details: [Build system](build-system.md).
 
 | File | Lines | Built | What it does | Docs |
 | --- | ---: | --- | --- | --- |
-| [`CMakeLists.txt`](../port/boards/playdate/CMakeLists.txt) | 103 | build | Defines the game target (device executable or Simulator library), its source list and the post-build steps. | [build](build-system.md#playdate-board-cmakeliststxt) |
+| [`CMakeLists.txt`](../port/boards/playdate/CMakeLists.txt) | 110 | build | Defines the game target (device executable or Simulator library), its source list and the post-build steps. | [build](build-system.md#playdate-board-cmakeliststxt) |
 | [`platform.cmake`](../port/boards/playdate/platform.cmake) | 140 | build | Every `PD_*` option, the compile definitions they produce, the force-included [`pd_compat.h`](port/playdate.md#pd_compath), and SDK and toolchain selection. | [build](build-system.md#playdate-platformcmake) |
 | [`toolchain.cmake`](../port/boards/playdate/toolchain.cmake) | 17 | build | The Arm GCC cross-compilation toolchain for the device build. | [build](build-system.md#toolchaincmake) |
 | [`pdx_buildnumber.cmake`](../port/boards/playdate/pdx_buildnumber.cmake) | 37 | build | Post-build step: gives every build the next build number in the built `pdxinfo`. | [build](build-system.md#playdate-board-cmakeliststxt) |
-| [`pdx_pak.cmake`](../port/boards/playdate/pdx_pak.cmake) | 52 | build | Post-build step: decides which game data the `.pdx` carries. A release build with a `pak0_demo.pak` ships it as `id1/pak0.pak` and leaves out the music; every other build drops `pak0_demo.pak`. | [build](build-system.md#which-pak0pak-the-pdx-gets) |
+| [`pdx_pak.cmake`](../port/boards/playdate/pdx_pak.cmake) | 60 | build | Post-build step: decides which game data the `.pdx` carries. A demo build with a `pak0_demo.pak` ships it as `id1/pak0.pak` and leaves out `pak1.pak`, the music and the mods; every other build drops `pak0_demo.pak`. | [build](build-system.md#which-pak0pak-the-pdx-gets) |
 | [`pdx_rename.cmake`](../port/boards/playdate/pdx_rename.cmake) | 16 | build | Profiling builds only: appends tags such as "profile, demo1" to the launcher title. | [build](build-system.md#playdate-board-cmakeliststxt) |
-| [`Source/pdxinfo`](../port/boards/playdate/Source/pdxinfo) | 8 | data | Game metadata: `name`, `author`, `bundleID`, `version`, `buildNumber`, and the launcher assets (`imagePath`, `launchSoundPath`) made by [`gen-launcher-assets.py`](tools.md#scriptsgen-launcher-assetspy). | [build](build-system.md#source) |
+| [`Source/pdxinfo`](../port/boards/playdate/Source/pdxinfo) | 8 | data | Game metadata: `name`, `author`, `bundleID`, `version`, `buildNumber`, and where the launcher assets are (`imagePath`, `launchSoundPath`). | [build](build-system.md#source) |
+| [`Source/launcher/card.png`](../port/boards/playdate/Source/launcher/card.png) | 27 | data | The launcher card, exported from [`card.aseprite`](build-system.md#launcher-art-art). | [build](build-system.md#launcher-art-art) |
+| [`Source/launcher/card-pressed.png`](../port/boards/playdate/Source/launcher/card-pressed.png) | 34 | data | The card while A is held, exported from [`card.aseprite`](build-system.md#launcher-art-art). | [build](build-system.md#launcher-art-art) |
+| [`Source/launcher/icon.png`](../port/boards/playdate/Source/launcher/icon.png) | 2 | data | The list-view icon, exported from [`icon.aseprite`](build-system.md#launcher-art-art). | [build](build-system.md#launcher-art-art) |
+| [`Source/launcher/launchImage.png`](../port/boards/playdate/Source/launcher/launchImage.png) | 47 | data | The launch image and loading splash, exported from [`launchImage.aseprite`](build-system.md#launcher-art-art). | [build](build-system.md#launcher-art-art) |
+| [`Source/launcher/wrapping-pattern.png`](../port/boards/playdate/Source/launcher/wrapping-pattern.png) | 9 | data | The wrapping paper, exported from [`wrapping-pattern.aseprite`](build-system.md#launcher-art-art). | [build](build-system.md#launcher-art-art) |
+| [`Source/launcher/launch.wav`](../port/boards/playdate/Source/launcher/launch.wav) | 32 | data | The launch sound, the Quake ammo pickup, made by [`gen-launcher-assets.py`](tools.md#scriptsgen-launcher-assetspy). | [build](build-system.md#launcher-art-art) |
 | [`Source/id1/.gitkeep`](../port/boards/playdate/Source/id1/.gitkeep) | 0 | data | Keeps the otherwise git-ignored `Source/id1/` (where your `pak0.pak` and music go) in the tree. | [build](build-system.md#source) |
-| [`.gitignore`](../port/boards/playdate/.gitignore) | 7 | config | Ignores `Source/pdex.*`, `Source/id1/` and `.build_number`. | [build](build-system.md#source) |
+| [`.gitignore`](../port/boards/playdate/.gitignore) | 9 | config | Ignores `Source/pdex.*`, every folder in `Source/` but `launcher/` (`id1/`, mods) and `.build_number`. | [build](build-system.md#source) |
 | [`DOS-CONFIG.CFG.bak`](../port/boards/playdate/DOS-CONFIG.CFG.bak) | 78 | unused | A stray backup of a DOS-era Quake config; not used by the build. | [build](build-system.md#source) |
 
 ## Engine core
@@ -377,13 +399,13 @@ Run on your computer around a device build. Page: [Scripts and tools](tools.md).
 
 | File | Lines | Built | What it does | Docs |
 | --- | ---: | --- | --- | --- |
-| [`release-device.sh`](../scripts/release-device.sh) | 86 | tool | A clean Release build of the device `.pdx` with a new build number, shipping the shareware pak when one is present. | [tools](tools.md#scriptsrelease-devicesh) |
+| [`release-device.sh`](../scripts/release-device.sh) | 108 | tool | A clean Release build of the device `.pdx` with a new build number: the shareware demo (default) or the full game, named `Quake-<version>-<demo\|full>` and zipped. | [tools](tools.md#scriptsrelease-devicesh) |
 | [`install-device.sh`](../scripts/install-device.sh) | 68 | tool | Copies the device `.pdx` to a USB-connected Playdate and launches it. | [tools](tools.md#scriptsinstall-devicesh) |
 | [`pd-bench.sh`](../scripts/pd-bench.sh) | 55 | tool | Installs a profiling build, runs it for a set time and fetches `prof.csv`. | [tools](tools.md#scriptspd-benchsh) |
 | [`pd-report.py`](../scripts/pd-report.py) | 134 | tool | Summarises and compares `prof.csv` files, including the `--ab` paired comparison. | [tools](tools.md#scriptspd-reportpy) |
-| [`gen-launcher-assets.py`](../scripts/gen-launcher-assets.py) | 302 | tool | Makes the launcher card, icon, launch image, wrapping paper and launch sound from the game data. | [tools](tools.md#scriptsgen-launcher-assetspy) |
+| [`gen-launcher-assets.py`](../scripts/gen-launcher-assets.py) | 317 | tool | Makes the launch sound, and any launcher image that is missing as a first draft, from the game data (the shipped images come from `Art/`). | [tools](tools.md#scriptsgen-launcher-assetspy) |
 | [`gen-bluenoise.py`](../scripts/gen-bluenoise.py) | 102 | tool | Generates the blue-noise tile ([`bluenoise.h`](port/playdate.md#bluenoiseh)) with void-and-cluster. | [tools](tools.md#scriptsgen-bluenoisepy) |
-| [`gen-source-index.py`](../scripts/gen-source-index.py) | 617 | tool | Generates the [source code index](source-index.md) (this page) from its own file list, and checks the docs' links. | [tools](tools.md#scriptsgen-source-indexpy) |
+| [`gen-source-index.py`](../scripts/gen-source-index.py) | 635 | tool | Generates the [source code index](source-index.md) (this page) from its own file list, and checks the docs' links. | [tools](tools.md#scriptsgen-source-indexpy) |
 | [`__pycache__/pd-report.cpython-314.pyc`](../scripts/__pycache__/pd-report.cpython-314.pyc) | — | generated | Python bytecode cache of `pd-report.py`; not source. | — |
 
 ## Host check (`tools/hostcheck/`)
@@ -406,13 +428,13 @@ These pages. Start at the [documentation index](README.md).
 | --- | ---: | --- | --- | --- |
 | [`README.md`](../docs/README.md) | 130 | doc | The documentation index: reading paths, architecture, the page map and conventions. | [docs index](README.md) |
 | [`source-index.md`](../docs/source-index.md) | — | doc | This file. | — |
-| [`building.md`](../docs/building.md) | 55 | doc | How to build for the Simulator and the device, game data, music, the main performance options. | [building](building.md) |
+| [`building.md`](../docs/building.md) | 64 | doc | How to build for the Simulator and the device, game data, music, the main performance options. | [building](building.md) |
 | [`renderer.md`](../docs/renderer.md) | 43 | doc | How the Playdate renderer differs from the original, and device timings. | [renderer](renderer.md) |
 | [`settings.md`](../docs/settings.md) | 39 | doc | The defaults and every Options menu setting, the dithering modes and their cost. | [settings](settings.md) |
 | [`profiling.md`](../docs/profiling.md) | 40 | doc | The on-device profiler and what it measured about the hardware. | [profiling](profiling.md) |
 | [`picture-check.md`](../docs/picture-check.md) | 23 | doc | Using the host check to show an optimisation does not change the picture. | [picture-check](picture-check.md) |
-| [`build-system.md`](../docs/build-system.md) | 294 | doc | CMake files, every `PD_*` option, release builds, which `pak0.pak` the `.pdx` gets, editor tasks. | [build](build-system.md) |
-| [`tools.md`](../docs/tools.md) | 332 | doc | The scripts and the host check harness. | [tools](tools.md) |
+| [`build-system.md`](../docs/build-system.md) | 315 | doc | CMake files, every `PD_*` option, release builds, which `pak0.pak` the `.pdx` gets, editor tasks. | [build](build-system.md) |
+| [`tools.md`](../docs/tools.md) | 343 | doc | The scripts and the host check harness. | [tools](tools.md) |
 | [`port/overview.md`](../docs/port/overview.md) | 288 | doc | The shared platform layer and the `qembd_*` board interface. | [overview](port/overview.md) |
 | [`port/playdate.md`](../docs/port/playdate.md) | 538 | doc | The Playdate board: main loop, display and dithering, files, sound, music, profiler. | [playdate](port/playdate.md) |
 | [`port/game-data.md`](../docs/port/game-data.md) | 249 | doc | The shareware and the 2021 re-release `pak0.pak`: what the engine needs from them. | [game-data](port/game-data.md) |
@@ -437,9 +459,9 @@ Every source and build file by name; each link opens the section that describes 
 
 **A** · [`anorms.h`](engine/models.md#anormsh) · [`asm_draw.h`](engine/perf-infrastructure.md#asm_drawh) · [`autofire.c`](port/playdate.md#autofirec--autofireh) · [`autofire.h`](port/playdate.md#autofirec--autofireh)
 
-**B** · [`block16.h`](engine/platform-interfaces.md#legacy-x86-headers-not-used) · [`block8.h`](engine/platform-interfaces.md#legacy-x86-headers-not-used) · [`bluenoise.h`](port/playdate.md#bluenoiseh) · [`bspfile.h`](engine/models.md#bspfileh) · [`build.sh`](tools.md#toolshostcheckbuildsh)
+**B** · [`Banner.aseprite`](build-system.md#launcher-art-art) · [`Banner.png`](build-system.md#launcher-art-art) · [`block16.h`](engine/platform-interfaces.md#legacy-x86-headers-not-used) · [`block8.h`](engine/platform-interfaces.md#legacy-x86-headers-not-used) · [`bluenoise.h`](port/playdate.md#bluenoiseh) · [`bspfile.h`](engine/models.md#bspfileh) · [`build.sh`](tools.md#toolshostcheckbuildsh)
 
-**C** · [`cd_null.c`](port/overview.md#portcd_nullc) · [`cd_pd.c`](port/playdate.md#cd_pdc) · [`cdaudio.h`](engine/platform-interfaces.md#cdaudioh) · [`chase.c`](engine/client.md#chasec) · [`cl_demo.c`](engine/client.md#cl_democ) · [`cl_input.c`](engine/client.md#cl_inputc) · [`cl_main.c`](engine/client.md#cl_mainc) · [`cl_parse.c`](engine/client.md#cl_parsec) · [`cl_tent.c`](engine/client.md#cl_tentc) · [`client.h`](engine/client.md#clienth) · [`CMakeLists.txt`](build-system.md#top-level-cmakeliststxt) · [`port/CMakeLists.txt`](build-system.md#portcmakeliststxt-shared-platform-layer) · [`port/boards/playdate/CMakeLists.txt`](build-system.md#playdate-board-cmakeliststxt) · [`winquake/CMakeLists.txt`](build-system.md#winquakecmakeliststxt-the-engine) · [`cmd.c`](engine/core.md#cmdh--cmdc) · [`cmd.h`](engine/core.md#cmdh--cmdc) · [`common.c`](engine/core.md#commonh--commonc) · [`common.h`](engine/core.md#commonh--commonc) · [`compare-shots.py`](tools.md#toolshostcheckcompare-shotspy) · [`console.c`](engine/ui.md#consoleh--consolec) · [`console.h`](engine/ui.md#consoleh--consolec) · [`crc.c`](engine/core.md#crch--crcc) · [`crc.h`](engine/core.md#crch--crcc) · [`cvar.c`](engine/core.md#cvarh--cvarc) · [`cvar.h`](engine/core.md#cvarh--cvarc)
+**C** · [`card-pressed.png`](build-system.md#launcher-art-art) · [`card.aseprite`](build-system.md#launcher-art-art) · [`Art/card.png`](build-system.md#launcher-art-art) · [`port/boards/playdate/Source/launcher/card.png`](build-system.md#launcher-art-art) · [`cd_null.c`](port/overview.md#portcd_nullc) · [`cd_pd.c`](port/playdate.md#cd_pdc) · [`cdaudio.h`](engine/platform-interfaces.md#cdaudioh) · [`chase.c`](engine/client.md#chasec) · [`cl_demo.c`](engine/client.md#cl_democ) · [`cl_input.c`](engine/client.md#cl_inputc) · [`cl_main.c`](engine/client.md#cl_mainc) · [`cl_parse.c`](engine/client.md#cl_parsec) · [`cl_tent.c`](engine/client.md#cl_tentc) · [`client.h`](engine/client.md#clienth) · [`CMakeLists.txt`](build-system.md#top-level-cmakeliststxt) · [`port/CMakeLists.txt`](build-system.md#portcmakeliststxt-shared-platform-layer) · [`port/boards/playdate/CMakeLists.txt`](build-system.md#playdate-board-cmakeliststxt) · [`winquake/CMakeLists.txt`](build-system.md#winquakecmakeliststxt-the-engine) · [`cmd.c`](engine/core.md#cmdh--cmdc) · [`cmd.h`](engine/core.md#cmdh--cmdc) · [`common.c`](engine/core.md#commonh--commonc) · [`common.h`](engine/core.md#commonh--commonc) · [`compare-shots.py`](tools.md#toolshostcheckcompare-shotspy) · [`console.c`](engine/ui.md#consoleh--consolec) · [`console.h`](engine/ui.md#consoleh--consolec) · [`crc.c`](engine/core.md#crch--crcc) · [`crc.h`](engine/core.md#crch--crcc) · [`cvar.c`](engine/core.md#cvarh--cvarc) · [`cvar.h`](engine/core.md#cvarh--cvarc)
 
 **D** · [`d_edge.c`](engine/renderer-original.md#d_edgec) · [`d_fill.c`](engine/renderer-original.md#d_fillc) · [`d_iface.h`](engine/renderer-original.md#d_ifaceh) · [`d_ifacea.h`](engine/platform-interfaces.md#legacy-x86-headers-not-used) · [`d_init.c`](engine/renderer-original.md#d_initc) · [`d_local.h`](engine/renderer-original.md#d_localh) · [`d_modech.c`](engine/renderer-original.md#d_modechc) · [`d_part.c`](engine/renderer-original.md#d_partc) · [`d_polyse.c`](engine/renderer-original.md#d_polysec) · [`d_scan.c`](engine/renderer-original.md#d_scanc) · [`d_scan_arm.S`](engine/perf-infrastructure.md#d_scan_arms) · [`d_sky.c`](engine/renderer-original.md#d_skyc) · [`d_sprite.c`](engine/renderer-original.md#d_spritec) · [`d_surf.c`](engine/renderer-original.md#d_surfc) · [`d_vars.c`](engine/renderer-original.md#r_varsc--d_varsc) · [`d_zpoint.c`](engine/renderer-original.md#d_zpointc) · [`defaultcfg.h`](engine/core.md#built-in-defaultcfg-defaultcfgh) · [`display.c`](port/playdate.md#displayc) · [`DOS-CONFIG.CFG.bak`](build-system.md#source) · [`draw.c`](engine/ui.md#drawh--drawc) · [`draw.h`](engine/ui.md#drawh--drawc)
 
@@ -449,11 +471,11 @@ Every source and build file by name; each link opens the section that describes 
 
 **H** · [`host.c`](engine/core.md#hostc) · [`host_cmd.c`](engine/core.md#host_cmdc) · [`hostcheck.c`](tools.md#toolshostcheckhostcheckc)
 
-**I** · [`in_port.c`](port/overview.md#portin_portc) · [`input.h`](engine/platform-interfaces.md#inputh) · [`install-device.sh`](tools.md#scriptsinstall-devicesh)
+**I** · [`icon.aseprite`](build-system.md#launcher-art-art) · [`icon.png`](build-system.md#launcher-art-art) · [`in_port.c`](port/overview.md#portin_portc) · [`input.h`](engine/platform-interfaces.md#inputh) · [`install-device.sh`](tools.md#scriptsinstall-devicesh) · [`ItchCoverImage.aseprite`](build-system.md#launcher-art-art) · [`ItchCoverImage.png`](build-system.md#launcher-art-art)
 
 **K** · [`keyqueue.c`](port/playdate.md#keyqueuec--keyqueueh) · [`keyqueue.h`](port/playdate.md#keyqueuec--keyqueueh) · [`keys.c`](engine/client.md#keysh--keysc) · [`keys.h`](engine/client.md#keysh--keysc)
 
-**L** · [`launch.json`](build-system.md#editor-integration)
+**L** · [`launch.json`](build-system.md#editor-integration) · [`launch.wav`](build-system.md#launcher-art-art) · [`launchImage.aseprite`](build-system.md#launcher-art-art) · [`launchImage.png`](build-system.md#launcher-art-art)
 
 **M** · [`main.c`](port/playdate.md#mainc) · [`mathlib.c`](engine/core.md#mathlibh--mathlibc) · [`mathlib.h`](engine/core.md#mathlibh--mathlibc) · [`menu.c`](engine/ui.md#menuh--menuc) · [`menu.h`](engine/ui.md#menuh--menuc) · [`model.c`](engine/models.md#modelc) · [`model.h`](engine/models.md#modelh) · [`modelgen.h`](engine/models.md#modelgenh)
 
@@ -471,7 +493,7 @@ Every source and build file by name; each link opens the section that describes 
 
 **V** · [`vgamodes.h`](engine/platform-interfaces.md#legacy-x86-headers-not-used) · [`vid.h`](engine/platform-interfaces.md#vidh) · [`vid_port.c`](port/overview.md#portvid_portc) · [`view.c`](engine/client.md#viewh--viewc) · [`view.h`](engine/client.md#viewh--viewc)
 
-**W** · [`wad.c`](engine/core.md#wadh--wadc) · [`wad.h`](engine/core.md#wadh--wadc) · [`weapons.c`](port/playdate.md#weaponsc--weaponsh) · [`weapons.h`](port/playdate.md#weaponsc--weaponsh) · [`world.c`](engine/server.md#worldh--worldc) · [`world.h`](engine/server.md#worldh--worldc)
+**W** · [`wad.c`](engine/core.md#wadh--wadc) · [`wad.h`](engine/core.md#wadh--wadc) · [`weapons.c`](port/playdate.md#weaponsc--weaponsh) · [`weapons.h`](port/playdate.md#weaponsc--weaponsh) · [`world.c`](engine/server.md#worldh--worldc) · [`world.h`](engine/server.md#worldh--worldc) · [`wrapping-pattern.aseprite`](build-system.md#launcher-art-art) · [`wrapping-pattern.png`](build-system.md#launcher-art-art)
 
 **Z** · [`zone.c`](engine/core.md#zoneh--zonec) · [`zone.h`](engine/core.md#zoneh--zonec)
 

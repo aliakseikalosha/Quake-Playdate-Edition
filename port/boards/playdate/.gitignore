@@ -3,5 +3,7 @@ Source/pdex.*
 # Game data is not redistributable (shareware pak0.pak is user-supplied): id1 and every other game
 # folder (mods, mission packs)
 Source/*/
+# except the launcher's images (exported from Art/) and launch sound
+!Source/launcher/
 # Last build number handed out (pdx_buildnumber.cmake)
 .build_number

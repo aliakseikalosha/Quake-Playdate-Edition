@@ -10,7 +10,7 @@ The Playdate has no command line, so Quake's main menu has a **Mods** item that 
 Copy the mod's folder (the one with its `pak0.pak`, `progs.dat` or `maps/` in it) next to `id1`:
 
 - on the device or in the Simulator, into the game's **Data** folder: `Data/<bundle id>/<folder>/` (the bundle id is in `Source/pdxinfo`, e.g. `com.aliakseikalosha.quake`; on the device, connect it over USB as a data disk, e.g. with `pdutil <port> datadisk`);
-- or before building, into `port/boards/playdate/Source/<folder>/`: `pdc` bundles it into the `.pdx`. A shareware release build leaves it out (below).
+- or before building, into `port/boards/playdate/Source/<folder>/`: `pdc` bundles it into the `.pdx`. The demo build leaves it out (below); the full release build (`scripts/release-device.sh full`) keeps it.
 
 A folder is listed if it holds a `.pak` file, a `progs.dat`, or a `maps/`, `progs/`, `gfx/` or `sound/` folder. The game that is running is always listed.
 
@@ -144,8 +144,8 @@ The port's own code had to learn the packs:
 
 ## Release build
 
-A shareware release (`scripts/release-device.sh` with a `Source/id1/pak0_demo.pak`) leaves every game folder other than `id1` out of the `.pdx`,
-as it does the music: the shareware does not run mods, and the mission packs are not redistributable. See
+A shareware release (`scripts/release-device.sh demo` with a `Source/id1/pak0_demo.pak`) leaves every game folder other than `id1` out of the `.pdx`,
+as it does the music and `pak1.pak`: the shareware does not run mods, and the mission packs are not redistributable. See
 [which pak0.pak the `.pdx` gets](../build-system.md#which-pak0pak-the-pdx-gets).
 
 ## What was checked, and what was not

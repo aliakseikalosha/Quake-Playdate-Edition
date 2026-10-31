@@ -52,7 +52,7 @@ group('Top level', 'Build entry point, licence and editor configuration.', '', [
     ('README.md', 'doc', 'The project overview: what it is, controls, and links to building and the guides in `docs/`.', '../README.md'),
     ('gpl-2.0.txt', 'licence', 'The GNU GPL v2 text; Quake\'s source is released under it.', None),
     ('.gitignore', 'config', 'Keeps `build-*/`, `bench-results/` and `tools/hostcheck/out/` out of git.', 'README.md#not-documented'),
-    ('.vscode/tasks.json', 'editor', 'VS Code tasks: simulator (debug) build, device build, release build, install over USB.', 'build-system.md#editor-integration'),
+    ('.vscode/tasks.json', 'editor', 'VS Code tasks: simulator (debug) build, device build, release (full) and demo builds, install over USB.', 'build-system.md#editor-integration'),
     ('.vscode/launch.json', 'editor', 'Launches the Playdate Simulator under CodeLLDB against `build-sim-debug/quake.pdx`.', 'build-system.md#editor-integration'),
 ])
 
@@ -88,16 +88,34 @@ group('Playdate board: sources (`port/boards/playdate/`)', 'Everything that touc
     ('port/boards/playdate/pdprof.c', 'profile', 'The on-device profiler: section timings, counters, stack probes, CPU/memory micro-benchmarks and the timedemo benchmark driver, written to `prof.csv`. Macros in {pdprof.h}.', 'port/playdate.md#pdprofc'),
 ])
 
+group('Launcher art (`Art/`)', 'Aseprite sources of the launcher images and the store art. Details: [Launcher art](build-system.md#launcher-art-art).', 'Art', [
+    ('Art/card.aseprite', 'art', 'The launcher card (350×155), exported as `Source/launcher/card.png` and `card-pressed.png`.', 'build-system.md#launcher-art-art'),
+    ('Art/card.png', 'art', 'An earlier export of the card.', 'build-system.md#launcher-art-art'),
+    ('Art/icon.aseprite', 'art', 'The list-view icon (32×32), exported as `Source/launcher/icon.png`.', 'build-system.md#launcher-art-art'),
+    ('Art/launchImage.aseprite', 'art', 'The launch image (400×240), exported as `Source/launcher/launchImage.png`; also the splash while the game loads.', 'build-system.md#launcher-art-art'),
+    ('Art/wrapping-pattern.aseprite', 'art', 'The wrapping paper of a newly downloaded copy (400×240), exported as `Source/launcher/wrapping-pattern.png`.', 'build-system.md#launcher-art-art'),
+    ('Art/Banner.aseprite', 'art', 'The store page banner (960×400).', 'build-system.md#launcher-art-art'),
+    ('Art/Banner.png', 'art', 'Its export.', 'build-system.md#launcher-art-art'),
+    ('Art/ItchCoverImage.aseprite', 'art', 'The itch.io cover image (630×500).', 'build-system.md#launcher-art-art'),
+    ('Art/ItchCoverImage.png', 'art', 'Its export.', 'build-system.md#launcher-art-art'),
+])
+
 group('Playdate board: build files and data', 'How the `.pdx` is configured, built and packaged. Details: [Build system](build-system.md).', 'port/boards/playdate', [
     ('port/boards/playdate/CMakeLists.txt', 'build', 'Defines the game target (device executable or Simulator library), its source list and the post-build steps.', 'build-system.md#playdate-board-cmakeliststxt'),
     ('port/boards/playdate/platform.cmake', 'build', 'Every `PD_*` option, the compile definitions they produce, the force-included {pd_compat.h}, and SDK and toolchain selection.', 'build-system.md#playdate-platformcmake'),
     ('port/boards/playdate/toolchain.cmake', 'build', 'The Arm GCC cross-compilation toolchain for the device build.', 'build-system.md#toolchaincmake'),
     ('port/boards/playdate/pdx_buildnumber.cmake', 'build', 'Post-build step: gives every build the next build number in the built `pdxinfo`.', 'build-system.md#playdate-board-cmakeliststxt'),
-    ('port/boards/playdate/pdx_pak.cmake', 'build', 'Post-build step: decides which game data the `.pdx` carries. A release build with a `pak0_demo.pak` ships it as `id1/pak0.pak` and leaves out the music; every other build drops `pak0_demo.pak`.', 'build-system.md#which-pak0pak-the-pdx-gets'),
+    ('port/boards/playdate/pdx_pak.cmake', 'build', 'Post-build step: decides which game data the `.pdx` carries. A demo build with a `pak0_demo.pak` ships it as `id1/pak0.pak` and leaves out `pak1.pak`, the music and the mods; every other build drops `pak0_demo.pak`.', 'build-system.md#which-pak0pak-the-pdx-gets'),
     ('port/boards/playdate/pdx_rename.cmake', 'build', 'Profiling builds only: appends tags such as "profile, demo1" to the launcher title.', 'build-system.md#playdate-board-cmakeliststxt'),
-    ('port/boards/playdate/Source/pdxinfo', 'data', 'Game metadata: `name`, `author`, `bundleID`, `version`, `buildNumber`, and the launcher assets (`imagePath`, `launchSoundPath`) made by {gen-launcher-assets.py}.', 'build-system.md#source'),
+    ('port/boards/playdate/Source/pdxinfo', 'data', 'Game metadata: `name`, `author`, `bundleID`, `version`, `buildNumber`, and where the launcher assets are (`imagePath`, `launchSoundPath`).', 'build-system.md#source'),
+    ('port/boards/playdate/Source/launcher/card.png', 'data', 'The launcher card, exported from {card.aseprite}.', 'build-system.md#launcher-art-art'),
+    ('port/boards/playdate/Source/launcher/card-pressed.png', 'data', 'The card while A is held, exported from {card.aseprite}.', 'build-system.md#launcher-art-art'),
+    ('port/boards/playdate/Source/launcher/icon.png', 'data', 'The list-view icon, exported from {icon.aseprite}.', 'build-system.md#launcher-art-art'),
+    ('port/boards/playdate/Source/launcher/launchImage.png', 'data', 'The launch image and loading splash, exported from {launchImage.aseprite}.', 'build-system.md#launcher-art-art'),
+    ('port/boards/playdate/Source/launcher/wrapping-pattern.png', 'data', 'The wrapping paper, exported from {wrapping-pattern.aseprite}.', 'build-system.md#launcher-art-art'),
+    ('port/boards/playdate/Source/launcher/launch.wav', 'data', 'The launch sound, the Quake ammo pickup, made by {gen-launcher-assets.py}.', 'build-system.md#launcher-art-art'),
     ('port/boards/playdate/Source/id1/.gitkeep', 'data', 'Keeps the otherwise git-ignored `Source/id1/` (where your `pak0.pak` and music go) in the tree.', 'build-system.md#source'),
-    ('port/boards/playdate/.gitignore', 'config', 'Ignores `Source/pdex.*`, `Source/id1/` and `.build_number`.', 'build-system.md#source'),
+    ('port/boards/playdate/.gitignore', 'config', 'Ignores `Source/pdex.*`, every folder in `Source/` but `launcher/` (`id1/`, mods) and `.build_number`.', 'build-system.md#source'),
     ('port/boards/playdate/DOS-CONFIG.CFG.bak', 'unused', 'A stray backup of a DOS-era Quake config; not used by the build.', 'build-system.md#source'),
 ])
 
@@ -278,11 +296,11 @@ group('Engine build file', 'Which engine files each configuration compiles.', 'w
 ])
 
 group('Scripts (`scripts/`)', 'Run on your computer around a device build. Page: [Scripts and tools](tools.md).', 'scripts', [
-    ('scripts/release-device.sh', 'tool', 'A clean Release build of the device `.pdx` with a new build number, shipping the shareware pak when one is present.', 'tools.md#scriptsrelease-devicesh'),
+    ('scripts/release-device.sh', 'tool', 'A clean Release build of the device `.pdx` with a new build number: the shareware demo (default) or the full game, named `Quake-<version>-<demo|full>` and zipped.', 'tools.md#scriptsrelease-devicesh'),
     ('scripts/install-device.sh', 'tool', 'Copies the device `.pdx` to a USB-connected Playdate and launches it.', 'tools.md#scriptsinstall-devicesh'),
     ('scripts/pd-bench.sh', 'tool', 'Installs a profiling build, runs it for a set time and fetches `prof.csv`.', 'tools.md#scriptspd-benchsh'),
     ('scripts/pd-report.py', 'tool', 'Summarises and compares `prof.csv` files, including the `--ab` paired comparison.', 'tools.md#scriptspd-reportpy'),
-    ('scripts/gen-launcher-assets.py', 'tool', 'Makes the launcher card, icon, launch image, wrapping paper and launch sound from the game data.', 'tools.md#scriptsgen-launcher-assetspy'),
+    ('scripts/gen-launcher-assets.py', 'tool', 'Makes the launch sound, and any launcher image that is missing as a first draft, from the game data (the shipped images come from `Art/`).', 'tools.md#scriptsgen-launcher-assetspy'),
     ('scripts/gen-bluenoise.py', 'tool', 'Generates the blue-noise tile ({bluenoise.h}) with void-and-cluster.', 'tools.md#scriptsgen-bluenoisepy'),
     ('scripts/gen-source-index.py', 'tool', 'Generates the [source code index](source-index.md) (this page) from its own file list, and checks the docs\' links.', 'tools.md#scriptsgen-source-indexpy'),
     ('scripts/__pycache__/pd-report.cpython-314.pyc', 'generated', 'Python bytecode cache of `pd-report.py`; not source.', None),

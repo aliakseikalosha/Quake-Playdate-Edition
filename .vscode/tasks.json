@@ -40,9 +40,17 @@
 		{
 			"label": "Playdate: release build (device)",
 			"type": "shell",
-			// Clean Release build of the device .pdx in build-release/ (no profiler), with a new
-			// build number: shown in the built pdxinfo and written to Source/pdxinfo.
-			"command": "./scripts/release-device.sh",
+			// Clean Release build of the full game, build-release-full/Quake-<version>-full.pdx and .zip (no profiler): pak0.pak,
+			// music and mods as they are in Source/. New build number, written to Source/pdxinfo.
+			"command": "./scripts/release-device.sh full",
+			"problemMatcher": ["$gcc"]
+		},
+		{
+			"label": "Playdate: demo build (device)",
+			"type": "shell",
+			// Clean Release build of the shareware, build-release/Quake-<version>-demo.pdx and .zip (no profiler): pak0_demo.pak as
+			// id1/pak0.pak, no music, no mods. New build number, written to Source/pdxinfo.
+			"command": "./scripts/release-device.sh demo",
 			"problemMatcher": ["$gcc"]
 		},
 		{

@@ -25,9 +25,16 @@ else()
 	target_link_libraries(${PLAYDATE_GAME_NAME} winquake port)
 endif()
 
-# The launcher's card, icon, launch image and launch sound (pdxinfo imagePath, launchSoundPath) are
-# made from the game data, so like it they are not in git (Source/launcher/): made here if missing.
-if(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/Source/launcher/card.png)
+# The launcher's images (exported from Art/) and launch sound (pdxinfo imagePath, launchSoundPath) are
+# in git in Source/launcher/; any that is missing is made here from the game data. The script never
+# replaces an image that is there.
+set(_pd_launcher_missing OFF)
+foreach(_f card.png card-pressed.png icon.png launchImage.png wrapping-pattern.png launch.wav)
+	if(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/Source/launcher/${_f})
+		set(_pd_launcher_missing ON)
+	endif()
+endforeach()
+if(_pd_launcher_missing)
 	find_package(Python3 COMPONENTS Interpreter)
 	if(Python3_FOUND)
 		execute_process(
@@ -36,7 +43,7 @@ if(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/Source/launcher/card.png)
 		)
 	endif()
 	if(NOT Python3_FOUND OR NOT _pd_launcher_result EQUAL 0)
-		message(WARNING "no launcher assets in Source/launcher/: run scripts/gen-launcher-assets.py")
+		message(WARNING "launcher assets missing in Source/launcher/: run scripts/gen-launcher-assets.py")
 	endif()
 endif()
 

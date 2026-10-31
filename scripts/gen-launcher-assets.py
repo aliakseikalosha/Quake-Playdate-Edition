@@ -2,11 +2,13 @@
 """Generates the Playdate launcher assets (pdxinfo imagePath and launchSoundPath) from the
 game's own data, so they look and sound like Quake.
 
-    scripts/gen-launcher-assets.py [<pak0.pak>] [<out dir>]
+    scripts/gen-launcher-assets.py [--force] [<pak0.pak>] [<out dir>]
 
 <pak0.pak> defaults to port/boards/playdate/Source/id1/pak0_demo.pak (the shareware, which is
 what a release ships), else pak0.pak next to it; <out dir> defaults to
-port/boards/playdate/Source/launcher. It writes:
+port/boards/playdate/Source/launcher. It always writes launch.wav; each image only when it is not
+there yet (the shipped ones are drawn in Art/ and exported over these first drafts), or, with
+--force, all of them:
 
     card.png            350x155  the card in the launcher's "cards" view
     card-pressed.png    350x155  the card while A is held (the card inverted)
@@ -244,7 +246,9 @@ def write_sound(path, data):
 # --- the assets ----------------------------------------------------------------------------
 
 def main():
-    pak = sys.argv[1] if len(sys.argv) > 1 else None
+    args = [a for a in sys.argv[1:] if a != "--force"]
+    force = len(args) < len(sys.argv) - 1
+    pak = args[0] if args else None
     if not pak:
         for name in ("pak0_demo.pak", "pak0.pak"):
             pak = os.path.join(SOURCE, "id1", name)
@@ -252,10 +256,24 @@ def main():
                 break
         else:
             sys.exit("no pak0_demo.pak or pak0.pak in Source/id1: pass the path of one")
-    out = sys.argv[2] if len(sys.argv) > 2 else os.path.join(SOURCE, "launcher")
+    out = args[1] if len(args) > 1 else os.path.join(SOURCE, "launcher")
     os.makedirs(out, exist_ok=True)
-
     get = read_pak(pak)
+
+    seconds = write_sound(os.path.join(out, "launch.wav"), get(SOUND))
+    print(f"{out}: launch.wav = {SOUND} ({seconds:.2f} s) from {os.path.basename(pak)}")
+    images = ("card.png", "card-pressed.png", "icon.png", "launchImage.png", "wrapping-pattern.png")
+    todo = [name for name in images if force or not os.path.exists(os.path.join(out, name))]
+    kept = [name for name in images if name not in todo]
+    if kept:
+        print(f"  kept (pass --force to remake): {', '.join(kept)}")
+    if not todo:
+        return
+
+    def save(name, img):
+        if name in todo:
+            write_png(os.path.join(out, name), img)
+
     palette = get("gfx/palette.lmp")
     wad = read_wad(get("gfx.wad"))
     conchars = wad["CONCHARS"]
@@ -271,31 +289,28 @@ def main():
     right = 22 + len(big[0]) + (350 - 22 - len(big[0]) - len(title[0])) // 2
     stamp(card, title, right, 46, 1, outline=2)
     stamp(card, sub, right + (len(title[0]) - len(sub[0])) // 2, 92, 1, outline=2)
-    write_png(os.path.join(out, "card.png"), card)
-    write_png(os.path.join(out, "card-pressed.png"), [[1 - v for v in row] for row in card])
+    save("card.png", card)
+    save("card-pressed.png", [[1 - v for v in row] for row in card])
 
     icon = solid(32, 32, 0)
     small = scale_to_height(logo, 30)
     stamp(icon, small, (32 - len(small[0])) // 2, 1, 1)
-    write_png(os.path.join(out, "icon.png"), icon)
+    save("icon.png", icon)
 
     launch = stone(tile, 400, 240)
     big = scale_to_height(logo, 196)
     stamp(launch, big, (400 - len(big[0])) // 2, 8, 1, outline=3)
     loading = text_mask(conchars, palette, "LOADING", 2)
     stamp(launch, loading, (400 - len(loading[0])) // 2, 214, 1, outline=2)
-    write_png(os.path.join(out, "launchImage.png"), launch)
+    save("launchImage.png", launch)
 
     paper = solid(400, 240, 1)
     small = scale_to_height(logo, 28)
     for row, y in enumerate(range(-14, 240, 40)):
         for x in range(-25 + (row % 2) * 25, 400, 50):
             stamp(paper, small, x, y, 0)
-    write_png(os.path.join(out, "wrapping-pattern.png"), paper)
-
-    seconds = write_sound(os.path.join(out, "launch.wav"), get(SOUND))
-    print(f"{out}: card, card-pressed, icon, launchImage, wrapping-pattern; "
-          f"launch.wav = {SOUND} ({seconds:.2f} s) from {os.path.basename(pak)}")
+    save("wrapping-pattern.png", paper)
+    print(f"  made: {', '.join(todo)}")
 
 
 if __name__ == "__main__":

@@ -113,11 +113,14 @@ static int in_use(const snd_entry_t *e)
 
 static void unload(snd_entry_t *e)
 {
-	/* Players must not keep a pointer to a sample we are about to free */
+	/*
+	 * Players must not play a sample we are about to free. setSample(NULL)
+	 * is an argument error (the Simulator pauses on it); a stopped player is
+	 * always given a new sample before it plays again.
+	 */
 	for (int i = 0; i < NUM_PLAYERS; i++) {
 		if (voices[i].bound && voices[i].bound == e->sample) {
 			qembd_pd->sound->sampleplayer->stop(voices[i].player);
-			qembd_pd->sound->sampleplayer->setSample(voices[i].player, NULL);
 			voices[i].bound = NULL;
 		}
 	}
@@ -131,15 +134,15 @@ static void unload(snd_entry_t *e)
 	e->bytes = 0;
 }
 
-/* Drop least-recently-used samples that no voice references */
-static void trim_cache(void)
+/* Drop least-recently-used samples that no voice references, except keep */
+static void trim_cache(const snd_entry_t *keep)
 {
 	while (pcm_bytes > PCM_BUDGET) {
 		snd_entry_t *oldest = NULL;
 
 		for (int i = 0; i < num_entries; i++) {
 			snd_entry_t *e = &entries[i];
-			if (e->sample && !in_use(e) &&
+			if (e->sample && e != keep && !in_use(e) &&
 			    (!oldest || e->last_used < oldest->last_used))
 				oldest = e;
 		}
@@ -175,7 +178,8 @@ static snd_entry_t *load(snd_entry_t *e)
 	e->pcm = pcm;
 	e->bytes = bytes;
 	pcm_bytes += bytes;
-	trim_cache();
+	e->last_used = ++tick;
+	trim_cache(e);	/* not e: the caller is about to play it */
 	return e;
 }
 

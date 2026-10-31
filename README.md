@@ -38,7 +38,7 @@ Copy a mod's or mission pack's folder (`hipnotic`, `rogue`, `mymod`, ...) next t
 
 ## Building
 
-Requires the [Playdate SDK](https://play.date/dev/) and your own `pak0.pak` (the shareware one is fine). The steps, where the game data and music go, and the CMake options are in **[Building](docs/building.md)**.
+Requires the [Playdate SDK](https://play.date/dev/) and your own `pak0.pak` (the shareware one is fine). The steps, where the game data and music go, and the CMake options are in **[Building](docs/building.md)**. `scripts/release-device.sh` makes the release zips: `Quake-<version>-demo.zip` (the shareware, shareable) and, with `full`, `Quake-<version>-full.zip`.
 
 ## Documentation
 

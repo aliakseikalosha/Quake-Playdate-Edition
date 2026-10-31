@@ -6,3 +6,4 @@ build-sim-debug
 build-*/
 bench-results/
 tools/hostcheck/out/
+Art/Video/

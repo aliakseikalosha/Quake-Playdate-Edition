@@ -1,27 +1,36 @@
 #!/bin/bash
 # Release build of the game for the Playdate device, with a new build number.
 #
-#   scripts/release-device.sh                 -> build-release/quake_DEVICE.pdx
-#   BUILD_DIR=build-foo scripts/release-device.sh
+#   scripts/release-device.sh [demo]          -> build-release/Quake-<version>-demo.pdx (.zip)       the shareware
+#   scripts/release-device.sh full            -> build-release-full/Quake-<version>-full.pdx (.zip)  the full game
+#   BUILD_DIR=build-foo scripts/release-device.sh [demo|full]
 #
 # What it does:
 #   1. removes the release build directory and the stale pdex.* files that pdc would bundle, so
 #      everything is rebuilt and the post-build step that hands out the build number always runs;
 #   2. configures a Release device build (no profiler, no benchmark) and builds it;
-#   3. ships Source/id1/pak0_demo.pak, if there is one, as id1/pak0.pak in the .pdx, without id1/music
-#      and without any other game folder (mods, mission packs) in Source/ (-DPD_RELEASE=ON; every
-#      other build leaves pak0_demo.pak out), and checks that it did;
+#   3. demo: ships Source/id1/pak0_demo.pak, if there is one, as id1/pak0.pak in the .pdx, without
+#      id1/pak1.pak (the registered episodes), id1/music and without any other game folder (mods, mission packs) in Source/ (-DPD_RELEASE=ON;
+#      every other build leaves pak0_demo.pak out), and checks that it did;
+#      full: ships Source/ as it is (pak0.pak, pak1.pak, music, mods), as a development build does,
+#      and checks that pak0_demo.pak was left out;
 #   4. checks that the build number in the built .pdx's pdxinfo went up (port/boards/playdate/
 #      pdx_buildnumber.cmake sets it to one more than the larger of .build_number and the number in
 #      Source/pdxinfo), and writes that number into Source/pdxinfo, so the number of the release is
-#      recorded in the source tree and the next build counts on from it.
+#      recorded in the source tree and the next build counts on from it;
+#   5. renames the .pdx to Quake-<version>-<demo|full>.pdx (version= in Source/pdxinfo) and zips it
+#      next to it as Quake-<version>-<demo|full>.zip, ready to sideload or upload.
 #
 # Install the result with the SDK's tools or copy it to the device's Games folder; scripts/install-device.sh
 # installs build-dev/quake_DEVICE.pdx.
 set -e
 cd "$(dirname "$0")/.."
 
-BUILD_DIR=${BUILD_DIR:-build-release}
+case "${1:-demo}" in
+  demo) KIND=demo; RELEASE=ON; BUILD_DIR=${BUILD_DIR:-build-release} ;;
+  full) KIND=full; RELEASE=OFF; BUILD_DIR=${BUILD_DIR:-build-release-full} ;;
+  *) echo "usage: $0 [demo|full]"; exit 1 ;;
+esac
 BOARD=port/boards/playdate
 SOURCE_PDXINFO=$BOARD/Source/pdxinfo
 COUNTER=$BOARD/.build_number
@@ -41,10 +50,10 @@ fi
 echo "== Cleaning $BUILD_DIR and stale pdex.* =="
 rm -rf "$BUILD_DIR" "$BOARD"/Source/pdex.*
 
-echo "== Configuring (Release, device) =="
+echo "== Configuring (Release, device, $KIND) =="
 cmake -S . -B "$BUILD_DIR" \
   -DCMAKE_TOOLCHAIN_FILE=$BOARD/toolchain.cmake -DBOARD_NAME=playdate \
-  -DCMAKE_BUILD_TYPE=Release -DPD_RELEASE=ON -DPD_PROFILE=OFF -DPD_BENCH=OFF
+  -DCMAKE_BUILD_TYPE=Release -DPD_RELEASE=$RELEASE -DPD_PROFILE=OFF -DPD_BENCH=OFF
 
 echo "== Building =="
 cmake --build "$BUILD_DIR" -j "$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 8)"
@@ -52,10 +61,15 @@ cmake --build "$BUILD_DIR" -j "$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/n
 [ -f "$PDX/pdxinfo" ] || { echo "$PDX/pdxinfo was not produced"; exit 1; }
 # the demo data replaced pak0.pak (pdx_pak.cmake); without a pak0_demo.pak the .pdx keeps pak0.pak
 DEMO_PAK=$BOARD/Source/id1/pak0_demo.pak
-if [ -f "$DEMO_PAK" ]; then
+if [ "$KIND" = full ]; then
+  [ ! -e "$PDX/id1/pak0_demo.pak" ] || { echo "$PDX/id1/pak0_demo.pak is still in the full release"; exit 1; }
+  pak="id1/pak0.pak, music and game folders as they are in Source/"
+elif [ -f "$DEMO_PAK" ]; then
   [ ! -e "$PDX/id1/pak0_demo.pak" ] && cmp -s "$DEMO_PAK" "$PDX/id1/pak0.pak" \
     || { echo "$PDX/id1/pak0.pak is not $DEMO_PAK (or pak0_demo.pak is still in the .pdx)"; exit 1; }
   [ ! -e "$PDX/id1/music" ] || { echo "$PDX/id1/music is still in the shareware release"; exit 1; }
+  ls "$PDX/id1" | grep -qE '^pak[1-9][0-9]*\.pak$' \
+    && { echo "$PDX/id1 still has the registered game's paks in the shareware release"; exit 1; }
   for d in "$PDX"/*/; do
     [ "$(basename "$d")" = id1 ] && continue
     ls "$d" 2>/dev/null | grep -qiE '\.pak$|^progs\.dat$|^(maps|progs|gfx|sound)$' \
@@ -79,8 +93,16 @@ else
   printf 'buildNumber=%s\n' "$new" >> "$SOURCE_PDXINFO"
 fi
 
-version=$(sed -n 's/^version=//p' "$SOURCE_PDXINFO" | head -n 1)
+# Quake-<version>-<kind>.pdx, and the same zipped (the folder itself at the top, as sideloading expects)
+version=$(sed -n 's/^version=//p' "$SOURCE_PDXINFO" | head -n 1 | tr -d '\r')
+NAME=$(printf 'Quake-%s-%s' "${version:-0}" "$KIND" | tr -c 'A-Za-z0-9._-' '_')
+mv "$PDX" "$BUILD_DIR/$NAME.pdx"
+PDX=$BUILD_DIR/$NAME.pdx
+ZIP=$BUILD_DIR/$NAME.zip
+(cd "$BUILD_DIR" && zip -q -r -X "$NAME.zip" "$NAME.pdx" -x '*.DS_Store')
+
 echo
-echo "Release build done: $PDX"
+echo "Release build ($KIND) done: $PDX"
+echo "  zipped: $ZIP ($(du -h "$ZIP" | cut -f1 | tr -d ' '))"
 echo "  version $version, build number $old -> $new (also written to $SOURCE_PDXINFO)"
 echo "  game data: $pak"

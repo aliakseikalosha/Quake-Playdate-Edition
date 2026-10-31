@@ -9,7 +9,7 @@ Two directories hold the helper programs:
 
 | File | Purpose |
 | --- | --- |
-| [`scripts/release-device.sh`](#scriptsrelease-devicesh) | Clean Release build of the device `.pdx` with a new build number |
+| [`scripts/release-device.sh`](#scriptsrelease-devicesh) | Clean Release build of the device `.pdx` (shareware demo or full game) with a new build number |
 | [`scripts/install-device.sh`](#scriptsinstall-devicesh) | Copy the device `.pdx` to a USB-connected Playdate and launch it |
 | [`scripts/pd-bench.sh`](#scriptspd-benchsh) | Run a profiling build on the device and fetch `prof.csv` |
 | [`scripts/pd-report.py`](#scriptspd-reportpy) | Summarise and compare `prof.csv` files |
@@ -26,28 +26,36 @@ Two directories hold the helper programs:
 
 ## `scripts/release-device.sh`
 
-A clean **Release** build of the game for the device, with a new build number. Also available as the VS Code task **Playdate: release build (device)**.
+A clean **Release** build of the game for the device, with a new build number, in one of two kinds:
+
+| Kind | VS Code task | Output | Game data in the `.pdx` |
+| --- | --- | --- | --- |
+| `demo` (the default) | **Playdate: demo build (device)** | `build-release/Quake-<version>-demo.pdx` and `.zip` | The shareware: `pak0_demo.pak` as `id1/pak0.pak`, no `pak1.pak` (the registered episodes), no music, no mods. The one to share. |
+| `full` | **Playdate: release build (device)** | `build-release-full/Quake-<version>-full.pdx` and `.zip` | `Source/` as it is: `pak0.pak`, `pak1.pak`, music, mods and mission packs. Not redistributable. |
 
 ```shell
-scripts/release-device.sh                    # → build-release/quake_DEVICE.pdx
-BUILD_DIR=build-foo scripts/release-device.sh
+scripts/release-device.sh                    # demo → build-release/Quake-0.4-demo.pdx, Quake-0.4-demo.zip
+scripts/release-device.sh full               # full → build-release-full/Quake-0.4-full.pdx, Quake-0.4-full.zip
+BUILD_DIR=build-foo scripts/release-device.sh [demo|full]
 ```
 
 Steps:
 
-1. Removes the build directory (`build-release`, git-ignored) and the stale `Source/pdex.*` files that `pdc` would bundle, so everything is rebuilt and the post-build step that hands out the build number always runs.
-2. Configures a Release device build (`-DCMAKE_BUILD_TYPE=Release -DPD_RELEASE=ON -DPD_PROFILE=OFF -DPD_BENCH=OFF`, with the SDK's ARM toolchain) and builds it with all cores.
-3. Ships the shareware data: when `port/boards/playdate/Source/id1/pak0_demo.pak` exists, the `.pdx` gets it as `id1/pak0.pak` instead of `pak0.pak` (`-DPD_RELEASE=ON`, [`pdx_pak.cmake`](build-system.md#which-pak0pak-the-pdx-gets); every other build leaves `pak0_demo.pak` out of its `.pdx`). The script checks the two files are identical and stops if not. Without a `pak0_demo.pak` the release keeps `pak0.pak`.
+1. Removes the build directory (`build-release` / `build-release-full`, git-ignored) and the stale `Source/pdex.*` files that `pdc` would bundle, so everything is rebuilt and the post-build step that hands out the build number always runs.
+2. Configures a Release device build (`-DCMAKE_BUILD_TYPE=Release -DPD_PROFILE=OFF -DPD_BENCH=OFF`, `-DPD_RELEASE=ON` for `demo` and `OFF` for `full`, with the SDK's ARM toolchain) and builds it with all cores.
+3. `full`: checks `pak0_demo.pak` was left out and ships everything else as a development build does. `demo` ships the shareware data: when `port/boards/playdate/Source/id1/pak0_demo.pak` exists, the `.pdx` gets it as `id1/pak0.pak` instead of `pak0.pak` (`-DPD_RELEASE=ON`, [`pdx_pak.cmake`](build-system.md#which-pak0pak-the-pdx-gets); every other build leaves `pak0_demo.pak` out of its `.pdx`). The script checks the two files are identical and stops if not. Without a `pak0_demo.pak` the release keeps `pak0.pak`.
 4. Reads the build number the build wrote into the `.pdx`'s `pdxinfo` ([`pdx_buildnumber.cmake`](build-system.md#playdate-board-cmakeliststxt): one more than the larger of `.build_number` and the `buildNumber` in `Source/pdxinfo`) and checks it went up. If it did not, the script stops with an error.
 5. Writes that number into `port/boards/playdate/Source/pdxinfo`, so the release's number is recorded in the source tree (a tracked file: commit it with the release) and the next build counts on from it. Nothing else in `Source/pdxinfo` is changed (to change the `version=` line, edit it by hand).
+6. Renames the `.pdx` (built as `quake_DEVICE.pdx`) to `Quake-<version>-<demo|full>.pdx`, with `<version>` the `version=` line of `Source/pdxinfo` (characters other than letters, digits, `.`, `_` and `-` become `_`), and zips it next to it as `Quake-<version>-<demo|full>.zip`, the `.pdx` folder at the top as sideloading at play.date expects (no `.DS_Store`). The demo zip is about 9 MB; the full one carries the music and the mission packs (about 400 MB).
 
 ```
-Release build done: build-release/quake_DEVICE.pdx
+Release build (demo) done: build-release/Quake-0.3-demo.pdx
+  zipped: build-release/Quake-0.3-demo.zip (9.1M)
   version 0.3, build number 88 -> 89 (also written to port/boards/playdate/Source/pdxinfo)
   game data: id1/pak0.pak is pak0_demo.pak
 ```
 
-Run twice, it goes 89 → 90: every release gets its own number. The built `pdxinfo` and `Source/pdxinfo` then agree; an ordinary build (`build-dev`, simulator) only changes the built `pdxinfo`, never `Source/pdxinfo`.
+Run twice, it goes 89 → 90: every release gets its own number, whichever the kind (both share the counter and the bundle ID, so on a device one replaces the other). The built `pdxinfo` and `Source/pdxinfo` then agree; an ordinary build (`build-dev`, simulator) only changes the built `pdxinfo`, never `Source/pdxinfo`.
 The script does not install the result; [`install-device.sh`](#scriptsinstall-devicesh) installs `build-dev/quake_DEVICE.pdx`.
 
 ## `scripts/install-device.sh`
@@ -120,9 +128,12 @@ rows.append(dict(zip(hdr, map(int, v))))
 
 Makes the assets the Playdate launcher shows for the game ([`pdxinfo`](build-system.md#source)'s `imagePath=launcher` and `launchSoundPath=launcher/launch`) out of the game's own data.
 
+> **The images it writes are a first draft.** The ones the game ships are drawn in Aseprite in `Art/`, exported to `Source/launcher/` and committed ([Launcher art](build-system.md#launcher-art-art)). So the script always writes `launch.wav` but an image only when that file is missing; `--force` remakes all of them, replacing the exports. The CMake configure step runs it when any of the six files is missing.
+
 ```shell
 scripts/gen-launcher-assets.py                       # Source/id1/pak0_demo.pak (else pak0.pak) -> Source/launcher/
 scripts/gen-launcher-assets.py <pak0.pak> <out dir>
+scripts/gen-launcher-assets.py --force               # also replace the images that are there
 ```
 
 | File | Size | What |
@@ -132,11 +143,11 @@ scripts/gen-launcher-assets.py <pak0.pak> <out dir>
 | `icon.png` | 32×32 | The Q logo, for the list view |
 | `launchImage.png` | 400×240 | Large Q logo and "LOADING", shown while the game loads |
 | `wrapping-pattern.png` | 400×240 | Rows of small Q logos: wrapping paper of a newly downloaded copy |
-| `launch.wav` | 0.3 s | The ammo pickup sound (`sound/weapons/lock4.wav`) as 16-bit PCM, played during the launch animation (`pdc` makes it a `.pda`) |
+| `launch.wav` | 0.3 s | The ammo pickup sound (`sound/weapons/lock4.wav`) as 16-bit PCM, played during the launch animation (`pdc` makes it a `.pda`). The one file the game still ships from this script. |
 
 - Pure Python, standard library only, deterministic; about 2 s.
 - The Q logo is cut out of `gfx/conback.lmp` (the console background, where it is a dark embossed shape): brightness blurred over 5×5, thresholded, the largest connected shape kept, its edges rounded, then resampled with 4×4 supersampling. The text is the console font (`CONCHARS` in `gfx.wad`, its lit face only), the stone is `BACKTILE` ordered-dithered to at most 25 % white. Every image is plain black and white, so `pdc` does not dither it again.
-- The output is derived from the game data and is not in git (`Source/*/` is ignored). The CMake configure step runs the script when `Source/launcher/card.png` is missing; after changing the script, run it by hand. A release build keeps `launcher/`: [`pdx_pak.cmake`](build-system.md#which-pak0pak-the-pdx-gets) only drops folders that hold game data.
+- `Source/launcher/` is in git. A release build keeps `launcher/`: [`pdx_pak.cmake`](build-system.md#which-pak0pak-the-pdx-gets) only drops folders that hold game data.
 - To use another sound, change `SOUND` at the top of the script (any `.wav` in the pak).
 
 ## `scripts/gen-bluenoise.py`
