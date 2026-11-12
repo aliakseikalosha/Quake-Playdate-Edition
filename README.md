@@ -1,4 +1,4 @@
-# Quake for Playdate
+# Quake: Playdate Edition
 
 A WinQuake port for the [Playdate](https://play.date/), running on the device and in the Playdate Simulator.
 Based on the original [Quake GPL source](https://github.com/id-Software/Quake), through [sysprog21/quake-embedded](https://github.com/sysprog21/quake-embedded).
