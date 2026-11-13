@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <ctype.h>
 #include "quakedef.h"
 
-#ifdef _WIN32
+#ifdef WQ_WIN32
 #include "winquake.h"
 #endif
 
@@ -980,7 +980,7 @@ void M_Net_Draw (void)
 	}
 	else
 	{
-#ifdef _WIN32
+#ifdef WQ_WIN32
 		p = NULL;
 #else
 		p = Draw_CachePic ("gfx/dim_modm.lmp");
@@ -998,7 +998,7 @@ void M_Net_Draw (void)
 	}
 	else
 	{
-#ifdef _WIN32
+#ifdef WQ_WIN32
 		p = NULL;
 #else
 		p = Draw_CachePic ("gfx/dim_drct.lmp");
@@ -1124,7 +1124,7 @@ enum
 	OPT_MAXFPS,
 	OPT_SHOWFPS,
 	OPT_VIDEO,
-#ifdef _WIN32
+#ifdef WQ_WIN32
 	OPT_USEMOUSE,
 #endif
 	OPTIONS_ITEMS
@@ -1217,7 +1217,7 @@ static qboolean M_OptionShown (int row)
 {
 	if (row == OPT_VIDEO)
 		return vid_menudrawfn != NULL;
-#ifdef _WIN32
+#ifdef WQ_WIN32
 	if (row == OPT_USEMOUSE)
 		return modestate == MS_WINDOWED;
 #endif
@@ -1281,7 +1281,7 @@ void M_AdjustSliders (int dir)
 		Cvar_SetValue ("bgmenabled", !bgmenabled.value);
 		break;
 	case OPT_MUSICVOL:
-#ifdef _WIN32
+#ifdef WQ_WIN32
 		bgmvolume.value += dir * 1.0f;
 #else
 		bgmvolume.value += dir * 0.1f;
@@ -1370,7 +1370,7 @@ void M_AdjustSliders (int dir)
 		Cvar_SetValue ("scr_showfps", !scr_showfps.value);
 		break;
 
-#ifdef _WIN32
+#ifdef WQ_WIN32
 	case OPT_USEMOUSE:
 		Cvar_SetValue ("_windowed_mouse", !_windowed_mouse.value);
 		break;
@@ -1521,7 +1521,7 @@ void M_Options_Draw (void)
 		case OPT_VIDEO:
 			M_OptPrint (OPT_LABEL_X, y, "Video options");
 			break;
-#ifdef _WIN32
+#ifdef WQ_WIN32
 		case OPT_USEMOUSE:
 			M_OptPrint (OPT_LABEL_X, y, "Use mouse");
 			M_OptCheckbox (OPT_VALUE_X, y, _windowed_mouse.value);
@@ -1873,7 +1873,7 @@ int		msgNumber;
 int		m_quit_prevstate;
 qboolean	wasInMenus;
 
-#ifndef	_WIN32
+#ifndef	WQ_WIN32
 char *quitMessage [] = 
 {
 /* .........1.........2.... */
@@ -1974,7 +1974,7 @@ void M_Quit_Draw (void)
 		m_state = m_quit;
 	}
 
-#ifdef _WIN32
+#ifdef WQ_WIN32
 	M_DrawTextBox (0, 0, 38, 23);
 	M_PrintWhite (16, 12,  "  Quake version 1.09 by id Software\n\n");
 	M_PrintWhite (16, 28,  "Programming        Art \n");

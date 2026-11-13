@@ -3,6 +3,6 @@ author=Aliaksei Kalosha
 description=Quake port for a Playdate
 bundleID=com.aliakseikalosha.quake
 version=0.4
-buildNumber=90
+buildNumber=127
 imagePath=launcher
 launchSoundPath=launcher/launch

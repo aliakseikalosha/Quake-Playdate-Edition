@@ -35,8 +35,14 @@ Everything outside `port/boards/` is board independent.
 ## Top-level `CMakeLists.txt`
 
 ```cmake
-cmake_minimum_required(VERSION 3.8)
-project(QuakEMBD C ASM)
+cmake_minimum_required(VERSION 3.8...3.19)
+project(QuakEMBD C)
+if(TOOLCHAIN STREQUAL "armgcc")
+	enable_language(ASM)
+endif()
+
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_EXTENSIONS ON)
 
 if(BOARD_NAME STREQUAL "playdate")
 	include(${CMAKE_CURRENT_LIST_DIR}/port/boards/playdate/platform.cmake)
@@ -52,6 +58,16 @@ add_subdirectory(winquake)
 - `-DWINQUAKE_LOGGING_EXTERNAL` makes `Sys_Printf` route through
   [`_Sys_Printf` in `port/sys_port.c`](../port/sys_port.c) so each board decides where log text goes.
 - `-fno-common` makes duplicate global definitions a link error instead of a silent merge.
+- ASM is only enabled for the device build (`TOOLCHAIN` is `armgcc` once `toolchain.cmake` ran):
+  the Thumb-2 `.S` files are the only assembly, and a Simulator build needs no assembler.
+- The C standard is pinned to `gnu11` (what the device's Arm GCC uses by default): GCC 15 and
+  later default to C23, where Quake's unprototyped function pointers (`void (*f)()`) take no
+  arguments and calls through them fail to compile.
+- `3.8...3.19` keeps CMake 4 from warning about the old minimum; 3.19 is what the SDK's own
+  `playdate.cmake` requires anyway.
+- Engine code that belonged to WinQuake's own Windows platform layer tests `WQ_WIN32`
+  ([`quakedef.h`](../winquake/quakedef.h)), not `_WIN32`: it is only defined for a non-Playdate Windows
+  build, so the Simulator's `pdex.dll` gets the same menus and behaviour as on the other hosts.
 - The Playdate board's `platform.cmake` is included *before* `add_subdirectory`, because it
   adds compile definitions (`PD_*`) that every target must see.
 
@@ -112,8 +128,12 @@ See [Shared platform layer](port/overview.md) for what these files do.
 ## Playdate: `platform.cmake`
 
 [`port/boards/playdate/platform.cmake`](../port/boards/playdate/platform.cmake) is where
-almost all build options live. It locates the SDK (`PLAYDATE_SDK_PATH`, or the `SDKRoot` line
-of `~/.Playdate/config`), picks defaults, and turns options into compile definitions.
+almost all build options live. It locates the SDK through
+[`pd_sdk.cmake`](../port/boards/playdate/pd_sdk.cmake) (`PLAYDATE_SDK_PATH`, or the `SDKRoot` line
+of `~/.Playdate/config`; plain CMake, so the same on macOS, Linux and Windows), stops on MSVC
+(the engine needs GCC or Clang, see [Building](building.md#linux-and-windows)), picks defaults, and
+turns options into compile definitions. With MinGW it also defines `_WINDLL`, as the SDK does for
+MSVC, so `pd_api.h` exports only `eventHandler` from `pdex.dll`.
 
 ### Options
 
@@ -234,8 +254,8 @@ The script configures with `-DPD_RELEASE=ON`, which makes the release ship the s
 
 ### `toolchain.cmake`
 
-[`toolchain.cmake`](../port/boards/playdate/toolchain.cmake) only locates the SDK and includes
-the SDK's own `C_API/buildsupport/arm.cmake`. Omit it and you get the Simulator build.
+[`toolchain.cmake`](../port/boards/playdate/toolchain.cmake) only locates the SDK (`pd_sdk.cmake`) and includes
+the SDK's own `C_API/buildsupport/arm.cmake`, which takes `arm-none-eabi-gcc` from the `PATH`. Omit it and you get the Simulator build.
 
 ### `Source/`
 
@@ -312,4 +332,6 @@ The engine's desktop networking (`net_dgrm.c`, `net_udp.c`, `net_bsd.c`) is Quak
 [`.vscode/tasks.json`](../.vscode/tasks.json) wraps the common builds
 (`Playdate: build (simulator, debug)`, `Playdate: build (device)`, `Playdate: release build (device)`, `Playdate: demo build (device)`, `Install on device (USB)`);
 [`.vscode/launch.json`](../.vscode/launch.json) launches the Playdate Simulator under CodeLLDB
-against `build-sim-debug/quake.pdx`. See [Scripts and tools](tools.md) for `release-device.sh` and `install-device.sh`.
+against `build-sim-debug/quake.pdx` (macOS: it runs the Simulator from inside its `.app`). The tasks
+are shell commands written for macOS and Linux (`rm -rf`, `touch`, the `scripts/*.sh`); on Windows run
+them from Git Bash or MSYS2. Every task is described in [Building: VS Code](building.md#vs-code). See [Scripts and tools](tools.md) for `release-device.sh` and `install-device.sh`.

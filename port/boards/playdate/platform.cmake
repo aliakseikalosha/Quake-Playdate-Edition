@@ -1,16 +1,13 @@
 # Settings shared by every target of a Playdate build (winquake, port, game).
 # Included from the top-level CMakeLists.txt, right after project().
 
-set(_pd_sdk "$ENV{PLAYDATE_SDK_PATH}")
-if(NOT _pd_sdk)
-	execute_process(
-		COMMAND bash -c "egrep '^\\s*SDKRoot' $HOME/.Playdate/config | head -n 1 | cut -c9-"
-		OUTPUT_VARIABLE _pd_sdk
-		OUTPUT_STRIP_TRAILING_WHITESPACE)
-endif()
-file(TO_CMAKE_PATH "${_pd_sdk}" SDK)
-if(NOT EXISTS "${SDK}")
-	message(FATAL_ERROR "Playdate SDK not found; set PLAYDATE_SDK_PATH")
+include(${CMAKE_CURRENT_LIST_DIR}/pd_sdk.cmake)
+
+# The engine uses GCC/Clang extensions (__attribute__((packed)), __builtin_clz, -include), so the
+# Simulator library on Windows is built with MinGW-w64 GCC, which the SDK supports, not MSVC.
+if(MSVC)
+	message(FATAL_ERROR "MSVC is not supported: build the Simulator library with MinGW-w64 GCC "
+		"(cmake -G \"MinGW Makefiles\" -DBOARD_NAME=playdate ..), see docs/building.md")
 endif()
 
 # 3D resolution. Quake's menus assume at least 320x200. The image is drawn
@@ -137,4 +134,9 @@ if(TOOLCHAIN STREQUAL "armgcc")
 else()
 	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 	add_compile_definitions(TARGET_SIMULATOR=1)
+	# Windows (MinGW): pd_api.h marks eventHandler __declspec(dllexport) under _WINDLL, which the
+	# SDK only defines for MSVC; without it the linker exports every global of the engine.
+	if(MINGW)
+		add_compile_definitions(_WINDLL=1)
+	endif()
 endif()

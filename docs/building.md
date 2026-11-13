@@ -4,7 +4,7 @@
 
 How to build the game for the Simulator and the device, where the game data and music go, and the CMake options that matter most. Every `PD_*` option and the CMake files themselves are described in the [build system](build-system.md) page.
 
-Requires the [Playdate SDK](https://play.date/dev/) (`PLAYDATE_SDK_PATH` set) and, for the device, the Arm toolchain the SDK installs.
+Requires the [Playdate SDK](https://play.date/dev/) (`PLAYDATE_SDK_PATH` set), CMake and a GCC or Clang host compiler, and, for the device, the Arm toolchain (`arm-none-eabi-gcc` on the `PATH`; the SDK installs it on macOS and Windows). Builds on macOS, Linux and Windows (MinGW-w64), see [Linux and Windows](#linux-and-windows).
 
 Game data is not included. Copy your `pak0.pak` (the freely distributable shareware one is fine) to
 `port/boards/playdate/Source/id1/pak0.pak` before building, or into the game's Data folder at `id1/`.
@@ -36,6 +36,24 @@ mkdir build-dev && cd build-dev
 cmake -DCMAKE_TOOLCHAIN_FILE=../port/boards/playdate/toolchain.cmake -DBOARD_NAME=playdate .. && make
 ```
 
+### Linux and Windows
+
+The CMake build is the same on every host the SDK supports; only the compiler and the CMake generator differ.
+
+- **Linux**: install the Linux SDK, set `PLAYDATE_SDK_PATH`, and install `cmake`, a host `gcc` (or `clang`) and, for the device, `arm-none-eabi-gcc` on the `PATH` (e.g. Debian/Ubuntu `gcc-arm-none-eabi`). The commands above work as they are; the Simulator loads `pdex.so`.
+- **Windows**: the SDK installer sets `PLAYDATE_SDK_PATH` and installs the Arm toolchain. The Simulator library has to be built with **MinGW-w64 GCC** (e.g. from [MSYS2](https://www.msys2.org/): `pacman -S mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake`), not MSVC: the engine uses GCC extensions (`__attribute__((packed))`, `__builtin_clz`, `-include`), and configuring with MSVC stops with an error. Pass a Makefile generator explicitly, since CMake picks Visual Studio by default:
+
+  ```shell
+  cmake -G "MinGW Makefiles" -DBOARD_NAME=playdate ..                     # Simulator -> quake.pdx with pdex.dll
+  cmake -G "MinGW Makefiles" -DCMAKE_TOOLCHAIN_FILE=../port/boards/playdate/toolchain.cmake -DBOARD_NAME=playdate ..  # device
+  cmake --build .
+  ```
+
+  The DLL needs only `KERNEL32` and the Universal C Runtime (Windows 10 and later), and exports only `eventHandler`.
+  It can also be cross-compiled on macOS or Linux (`brew install mingw-w64`, or the distribution's `mingw-w64` package) with a toolchain file that sets `CMAKE_SYSTEM_NAME Windows` and `CMAKE_C_COMPILER x86_64-w64-mingw32-gcc`.
+  `scripts/release-device.sh` needs a POSIX shell with `zip` (Git Bash or MSYS2).
+- **macOS only**: `scripts/install-device.sh`, `scripts/pd-bench.sh` (they use `/Volumes/PLAYDATE`, `diskutil` and `/dev/cu.usbmodem*`) and the VS Code launch configuration (see [VS Code](#vs-code)). On other hosts install a `.pdx` with the Simulator's *Upload Game to Device* or by copying it to the device's data disk.
+
 Release builds, clean and optimised, each as a `.pdx` and a `.zip` ready to sideload or upload (also the VS Code tasks **Playdate: demo build (device)** and **Playdate: release build (device)**):
 
 ```shell
@@ -44,6 +62,30 @@ scripts/release-device.sh full   # build-release-full/Quake-<version>-full.pdx, 
 ```
 
 `<version>` is the `version=` line of `Source/pdxinfo`. Details in [Scripts and tools](tools.md#scriptsrelease-devicesh).
+
+### VS Code
+
+Open the repository folder in VS Code and run the builds from **Terminal > Run Task...** ([`.vscode/tasks.json`](../.vscode/tasks.json)); they run the same `cmake` commands as above, from the repository root:
+
+| Task | What it does | Output |
+| --- | --- | --- |
+| **Playdate: build (simulator, debug)** | The default build task (Cmd/Ctrl+Shift+B). Configures a Debug Simulator build first, then builds; it touches `port/boards/playdate/main.c` so every run relinks and runs `pdc` again, picking up changes in `Source/`. | `build-sim-debug/quake.pdx` |
+| **Playdate: configure (simulator, debug)** | Only the `cmake` configure step of the task above. | `build-sim-debug/` |
+| **Playdate: clean (simulator)** | Deletes `build-sim/`, `build-sim-debug/` and the `pdex.dylib` / `.so` / `.dll` the Simulator build copies into `Source/`. Device builds are untouched. | |
+| **Playdate: build (device)** | Configures and builds the device build. | `build-dev/quake_DEVICE.pdx` |
+| **Playdate: clean build (device)** | Deletes `build-dev/` and every `Source/pdex.*` (which `pdc` would otherwise bundle into the `.pdx`), then builds the device build from scratch. | `build-dev/quake_DEVICE.pdx` |
+| **Playdate: demo build (device)** | `scripts/release-device.sh demo`: the shareware release, see above. | `build-release/Quake-<version>-demo.pdx`, `.zip` |
+| **Playdate: release build (device)** | `scripts/release-device.sh full`: the full release, see above. | `build-release-full/Quake-<version>-full.pdx`, `.zip` |
+| **Install on device (USB)** | Runs **Playdate: clean build (device)**, then `scripts/install-device.sh` copies the `.pdx` to a Playdate on USB and starts it (macOS only). | |
+
+Compiler errors and warnings from the build tasks show up in the **Problems** panel.
+
+To debug the Simulator build, install the [CodeLLDB](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb) extension and press F5 (**Playdate Simulator: Quake** in [`.vscode/launch.json`](../.vscode/launch.json)). It runs **Playdate: build (simulator, debug)** first, then starts the Playdate Simulator on `build-sim-debug/quake.pdx`; breakpoints in the engine and in `port/boards/playdate/` take effect once the Simulator has loaded the game. The SDK has no debugger for the device.
+
+On other hosts:
+
+- The launch configuration starts the Simulator from inside its macOS `.app`. On Linux, point `program` at the SDK's Linux Simulator binary in `bin/`; on Windows, at `bin/PlaydateSimulator.exe`, using a debugger that reads MinGW's GDB/DWARF debug info (CodeLLDB does).
+- The tasks are POSIX shell commands (`rm -rf`, `touch`, `./scripts/*.sh`). On Windows, set Git Bash or MSYS2 as VS Code's integrated terminal shell (`terminal.integrated.defaultProfile.windows`). Also set the environment variable `CMAKE_GENERATOR` to `MinGW Makefiles` before starting VS Code: the configure commands pass no `-G`, and CMake would otherwise pick Visual Studio (MSVC), which this build does not support.
 
 Every build gets the next build number: after `pdc`, `port/boards/playdate/pdx_buildnumber.cmake` writes it into the built `.pdx`'s `pdxinfo` (`buildNumber=`). The last number handed out is kept in `port/boards/playdate/.build_number` (not in git, shared by the device, simulator and profiling build directories), so `Source/pdxinfo` stays untouched; the count continues from whichever is larger, that file or the `buildNumber` in `Source/pdxinfo`. A build with nothing to recompile keeps its number.
 

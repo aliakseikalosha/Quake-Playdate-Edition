@@ -686,7 +686,7 @@ void Draw_ConsoleBackground (int lines)
 	DRAW_TOUCH (0, lines);
 
 // hack the version number directly into the pic
-#ifdef _WIN32
+#ifdef WQ_WIN32
 	sprintf (ver, "(WinQuake) %4.2f", (float)VERSION);
 	dest = conback->data + 320*186 + 320 - 11 - 8*strlen(ver);
 #elif defined(X11)

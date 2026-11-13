@@ -23,6 +23,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define	QUAKE_GAME			// as opposed to utilities
 
+// WinQuake's own Windows platform layer (windowed modes, mouse, DirectSound, CD volume steps,
+// winquake.h). The engine tests this instead of _WIN32, which every Windows compiler defines:
+// a Playdate build on a Windows host (the Simulator's pdex.dll) has none of that layer and has
+// to behave as on the other hosts.
+#if defined(_WIN32) && !defined(QEMBD_PLAYDATE)
+#define	WQ_WIN32	1
+#endif
+
 #define	VERSION				1.09
 #define	GLQUAKE_VERSION		1.00
 #define	D3DQUAKE_VERSION	0.01

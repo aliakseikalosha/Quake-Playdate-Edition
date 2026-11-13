@@ -125,7 +125,7 @@ void Q_memset (void *dest, int fill, int count)
 {
 	int             i;
 	
-	if ( (((long)dest | count) & 3) == 0)
+	if ( (((uintptr_t)dest | count) & 3) == 0)
 	{
 		count >>= 2;
 		fill = fill | (fill<<8) | (fill<<16) | (fill<<24);
@@ -141,7 +141,7 @@ void Q_memcpy (void *dest, void *src, int count)
 {
 	int             i;
 	
-	if (( ( (long)dest | (long)src | count) & 3) == 0 )
+	if (( ( (uintptr_t)dest | (uintptr_t)src | count) & 3) == 0 )
 	{
 		count>>=2;
 		for (i=0 ; i<count ; i++)
@@ -1294,7 +1294,7 @@ int COM_FindFile (char *filename, int *handle, FILE **file)
 				strcpy (cachepath, netpath);
 			else
 			{	
-#if defined(_WIN32)
+#if defined(WQ_WIN32)
 				if ((strlen(netpath) < 2) || (netpath[1] != ':'))
 					sprintf (cachepath,"%s%s", com_cachedir, netpath);
 				else

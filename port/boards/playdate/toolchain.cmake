@@ -3,15 +3,11 @@
 #         -DBOARD_NAME=playdate ..
 # Omit the toolchain file to build the Simulator library on the host instead.
 
-set(_pd_sdk "$ENV{PLAYDATE_SDK_PATH}")
-if(NOT _pd_sdk)
-	execute_process(
-		COMMAND bash -c "egrep '^\\s*SDKRoot' $HOME/.Playdate/config | head -n 1 | cut -c9-"
-		OUTPUT_VARIABLE _pd_sdk
-		OUTPUT_STRIP_TRAILING_WHITESPACE)
-endif()
-if(NOT EXISTS "${_pd_sdk}/C_API/buildsupport/arm.cmake")
-	message(FATAL_ERROR "Playdate SDK not found; set PLAYDATE_SDK_PATH")
-endif()
+include(${CMAKE_CURRENT_LIST_DIR}/pd_sdk.cmake)
 
-include(${_pd_sdk}/C_API/buildsupport/arm.cmake)
+# The SDK's arm.cmake finds arm-none-eabi-gcc on the PATH (the SDK installs it on macOS and
+# Windows; on Linux install the distribution's gcc-arm-none-eabi or Arm's toolchain).
+include(${SDK}/C_API/buildsupport/arm.cmake)
+if(NOT CROSS_GCC_PATH)
+	message(FATAL_ERROR "arm-none-eabi-gcc not found on the PATH")
+endif()
