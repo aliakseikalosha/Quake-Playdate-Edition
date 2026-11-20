@@ -1118,6 +1118,7 @@ enum
 	OPT_AUTOFIRE,
 	OPT_TEXDETAIL,
 	OPT_LIGHTLEVELS,
+	OPT_TEXWARP,
 	OPT_INTERLACE,
 	OPT_DITHER,
 	OPT_MAXDIST,
@@ -1252,6 +1253,7 @@ void M_Menu_Options_Shortcut (void)
 
 extern cvar_t	d_mipcap;
 extern cvar_t	r_interlace;
+extern cvar_t	r_affine;
 
 void M_AdjustSliders (int dir)
 {
@@ -1318,8 +1320,17 @@ void M_AdjustSliders (int dir)
 		Cvar_SetValue ("cl_autofire", !cl_autofire.value);
 		break;
 
-	case OPT_TEXDETAIL:	// low = d_mipcap 1, the sharpest mip level is never used
-		Cvar_SetValue ("d_mipcap", d_mipcap.value >= 1 ? 0 : 1);
+	case OPT_TEXDETAIL:	// lowest / low / high = d_mipcap 2 / 1 / 0 (low and lowest never use the sharpest
+						// one or two mip levels); right and Enter add detail, no wrap-around
+		{
+			int		cap = (int)d_mipcap.value - dir;
+
+			if (cap < 0)
+				cap = 0;
+			if (cap > 2)
+				cap = 2;
+			Cvar_SetValue ("d_mipcap", cap);
+		}
 		break;
 
 	case OPT_LIGHTLEVELS:	// 4, 8, 16, 64, no wrap-around
@@ -1332,6 +1343,10 @@ void M_AdjustSliders (int dir)
 				step = NUM_LIGHTLEVEL_STEPS - 1;
 			Cvar_SetValue ("r_lightlevels", lightlevel_steps[step]);
 		}
+		break;
+
+	case OPT_TEXWARP:	// PSX-style affine texturing of the world (pdr_span.c)
+		Cvar_SetValue ("r_affine", !r_affine.value);
 		break;
 
 	case OPT_INTERLACE:	// draw every other row of the 3D view per frame
@@ -1487,6 +1502,10 @@ void M_Options_Draw (void)
 		case OPT_LIGHTLEVELS:
 			M_OptPrint (OPT_LABEL_X, y, "Light levels");
 			M_OptPrint (OPT_VALUE_X, y, (char *)lightlevel_names[M_LightLevelStep ()]);
+			break;
+		case OPT_TEXWARP:
+			M_OptPrint (OPT_LABEL_X, y, "Texture warp");
+			M_OptCheckbox (OPT_VALUE_X, y, r_affine.value);
 			break;
 		case OPT_INTERLACE:
 			M_OptPrint (OPT_LABEL_X, y, "Interlaced");

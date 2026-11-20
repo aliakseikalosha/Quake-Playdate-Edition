@@ -125,6 +125,7 @@ cvar_t	r_clearcolor = {"r_clearcolor","2"};
 cvar_t	r_waterwarp = {"r_waterwarp","1"};
 cvar_t	r_interlace = {"r_interlace","0", true};	// port: "Interlaced" in the options menu (off by default)
 int		r_interlace_skip = 2;	// see d_iface.h
+cvar_t	r_affine = {"r_affine","0", true};	// port: "Texture warp" in the options menu; only the new renderer (pdr_span.c) draws it
 cvar_t	r_maxdist = {"r_maxdist","1024", true};	// port: "Draw distance" in the options menu, 0 = unlimited
 float	r_maxdist2;				// r_maxdist squared for this frame, 0 = unlimited
 cvar_t	r_fullbright = {"r_fullbright","0"};
@@ -207,6 +208,7 @@ void R_Init (void)
 	Cvar_RegisterVariable (&r_clearcolor);
 	Cvar_RegisterVariable (&r_waterwarp);
 	Cvar_RegisterVariable (&r_interlace);
+	Cvar_RegisterVariable (&r_affine);
 	Cvar_RegisterVariable (&r_maxdist);
 	Cvar_RegisterVariable (&r_fullbright);
 	Cvar_RegisterVariable (&r_drawentities);

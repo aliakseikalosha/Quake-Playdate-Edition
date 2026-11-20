@@ -227,7 +227,7 @@ group('Playdate renderer (`pdr_*`)', 'The default 3D renderer (`PD_NEW_RENDERER=
     ('winquake/pdr.h', 'header · new renderer', 'The renderer\'s internal interface: constants, compact brush-data structs, shared globals, the span context.', 'engine/renderer-pdr.md#pdrh'),
     ('winquake/pdr_main.c', 'new renderer', '`R_RenderView` and the per-frame setup; owns the globals the original refresh had; interlacing.', 'engine/renderer-pdr.md#pdr_mainc'),
     ('winquake/pdr_world.c', 'new renderer', 'Builds the compact brush data at map load, walks the BSP front to back, keeps the per-row coverage mask, draws brush entities.', 'engine/renderer-pdr.md#pdr_worldc'),
-    ('winquake/pdr_span.c', 'new renderer', 'Draws one span of one face: textured, water and sky spans straight from the mip texture; the PSX-style affine span of the "Light levels" setting.', 'engine/renderer-pdr.md#pdr_spanc'),
+    ('winquake/pdr_span.c', 'new renderer', 'Draws one span of one face: textured (perspective-correct every 8 pixels, with the fewer colormap rows of the "Light levels" setting below high; PSX-style affine with "Texture warp"), water and sky spans straight from the mip texture.', 'engine/renderer-pdr.md#pdr_spanc'),
     ('winquake/pdr_light.c', 'new renderer', 'Light blocks in place of the surface cache; light styles, dynamic lights, `R_LightPoint` and the colormap rows kept by the "Light levels" setting.', 'engine/renderer-pdr.md#pdr_lightc'),
     ('winquake/pdr_alias.c', 'new renderer', 'Alias models (monsters, items, the weapon): transform, lighting and its own triangle rasterizer.', 'engine/renderer-pdr.md#pdr_aliasc'),
     ('winquake/pdr_sprite.c', 'new renderer', 'Sprites (explosions, bubbles) and particles.', 'engine/renderer-pdr.md#pdr_spritec'),

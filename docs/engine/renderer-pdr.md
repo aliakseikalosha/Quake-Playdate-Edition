@@ -46,8 +46,8 @@ R_RenderView()
   models, sprites and the weapon (the whole view while particles are alive).
 - **Single precision only**, a polynomial `sin`/`cos`, no `double` in the frame.
 - **Light levels.** Below `high` (the "Light levels" option) the world uses only 4, 8 or 16 of
-  the colormap's 64 rows and PSX-style affine texturing, which cuts the colormap cache misses
-  that dominate span drawing (see [Light levels](#light-levels)).
+  the colormap's 64 rows, which cuts the colormap cache misses that dominate span drawing (see
+  [Light levels](#light-levels)); the texture stays perspective-correct.
 
 The picture is not bit-identical to the original: lighting is interpolated over 8-pixel runs
 instead of a 16×16 surface cache, and small alias models come out a pixel thinner. See the
@@ -318,7 +318,7 @@ void PDR_DrawSpan (const pdr_spanctx_t *c, int y, int x0, int x1)
 {
 	byte *dst = pdr_vbuf + y * pdr_stride + x0;
 	switch (c->kind) {
-	case PDR_SPAN_LIT:  if (pdr_lightrows) SpanLitAffine (c, dst, y, x0, x1 - x0);  // light levels below high
+	case PDR_SPAN_LIT:  if (pdr_affine) SpanLitAffine (c, dst, y, x0, x1 - x0);   // "Texture warp" (r_affine)
 	                    else SpanLit (c, dst, y, x0, x1 - x0); break;
 	case PDR_SPAN_TURB: SpanTurb (c, dst, y, x0, x1 - x0); break;
 	default:            SpanSky  (dst, y, x0, x1 - x0);    break;
@@ -329,8 +329,8 @@ void PDR_DrawSpan (const pdr_spanctx_t *c, int y, int x0, int x1)
 | Function | Purpose |
 | --- | --- |
 | `SampleLight` | Bilinear light from the block at 16.16 surface coordinates (the block is padded, so the right and bottom neighbours can be read at the edge with weight 0). |
-| `SpanLit` → `SpanLitPow2` / `SpanLitWrap` | `SpanLit` does the per-8-pixel perspective divide (`PDR_SUBDIV`) and steps `s`, `t` and the light between divides, then calls an inner loop: `*dst++ = cmap[((l >> 10) & 0x3f00) + tex[((t >> tshift) & tmask) + ((s >> 16) & smask)]]`. `SpanLitPow2` uses masks (texture width and height are powers of two, `c->tshift >= 0`); `SpanLitWrap` handles other sizes by wrapping `s` and `t` with a modulo (and takes the `rows` table below, `NULL` here). |
-| `SpanLitAffine` → `SpanLitPow2Rows` / `SpanLitWrap` | The light-levels span (`pdr_lightrows` set). `s` and `t` are perspective-correct only at the span's two ends and stepped linearly in between (PSX-style; textures bend a little on long spans in steep perspective), and the light is still sampled every `PDR_ASUBDIV` (16) pixels along that path, since from the ends alone a lit patch in the middle of a long wall span went dark. The inner loop looks the colormap row up in the table: `cmap[rows[(l >> 18) & 63] + tex[...]]`. |
+| `SpanLit` → `SpanLitPow2` / `SpanLitWrap` | `SpanLit` does the per-8-pixel perspective divide (`PDR_SUBDIV`) and steps `s`, `t` and the light between divides, then calls an inner loop: `*dst++ = cmap[((l >> 10) & 0x3f00) + tex[((t >> tshift) & tmask) + ((s >> 16) & smask)]]`. `SpanLitPow2` uses masks (texture width and height are powers of two, `c->tshift >= 0`); `SpanLitWrap` handles other sizes by wrapping `s` and `t` with a modulo. With fewer light levels (`pdr_lightrows` set) the power-of-two loop is `SpanLitPow2Rows`, which looks the colormap row up in the table: `cmap[rows[(l >> 18) & 63] + tex[...]]`, and `SpanLitWrap` gets the same table (`NULL` at `high`). The texture coordinates are the same at every level. |
+| `SpanLitAffine` | The "Texture warp" option's span (`r_affine` 1, `pdr_affine` set per frame in `PDR_SetupFrame`). `s` and `t` are perspective-correct only at the span's two ends and stepped linearly in between (PSX-style; textures bend and swim on long spans in steep perspective), and the light is still sampled every `PDR_ASUBDIV` (16) pixels along that path, since from the ends alone a lit patch in the middle of a long wall span went dark. Same inner loops as `SpanLit`, with or without the light-levels table. At `medium` light it draws exactly what the light-levels span drew before 2026-11-20 (host shots of the three demos, byte for byte). |
 | `SpanTurb` | Water: the sine-warped texture lookup (`pdr_sintable`). |
 | `SpanSky` / `Sky_uv_To_st` | Two-layer scrolling sky; `R_InitSky` splits the sky texture into its layers. |
 | `PDR_ZSpan` | Writes 1/z for a span (only where entities will test against it). |
@@ -375,7 +375,10 @@ Span drawing is memory-bound: on the device a lit pixel cost about 0.67 µs (som
 much of it is the colormap lookup `cmap[row * 256 + texel]`, where the row is the light level.
 The colormap is 16 KB, as big as the data cache, so a frame whose light spreads over all 64 rows
 keeps missing it. The "Light levels" option (`r_lightlevels` 4 / 8 / 16 / 64) lets the world use
-only a few rows, and switches those frames to `SpanLitAffine` (see [`pdr_span.c`](#pdr_spanc)).
+only a few rows (`SpanLitPow2Rows`, see [`pdr_span.c`](#pdr_spanc)). Until 2026-11-20 those frames also
+used `SpanLitAffine`, which stepped `s` and `t` linearly between the span's ends (PSX style); textures
+swam on long spans, so that is now its own option, "Texture warp" (`r_affine`, off by default), and the
+light levels keep the spans perspective-correct every 8 pixels.
 
 ```c
 extern const unsigned short *pdr_lightrows;   // row -> byte offset of the row used; NULL = all 64
@@ -396,13 +399,15 @@ the kept row nearest in brightness.
 | lowest | 4 | 0, 37, 52, 63 |
 | low | 8 | 0, 21, 34, 42, 48, 53, 58, 63 |
 | medium (default) | 16 | 0, 10, 20, 27, 33, 37, 41, 44, 47, 49, 52, 54, 56, 58, 60, 63 |
-| high | 64 | all (the original path: `SpanLit`, perspective every 8 pixels) |
+| high | 64 | all (`SpanLitPow2`, no table) |
 
 Device results, demos 1-3, world drawing compared with `high` in the same run
 (`-DPD_PDR_EXP=11 "-DPD_BENCH_CMDS=r_lightlevels N"`: the A/B frames with the switch on draw 64):
-medium −1.07…−1.57 ms, low −1.20…−1.78 ms, lowest −1.29…−1.96 ms per frame. Of that, the affine
-spans alone were worth about 0.8 ms and 16 rows instead of 64 alone about 0.7 ms (measured
-separately); sampling the light every 16 pixels costs back about 0.2 ms.
+medium −1.07…−1.57 ms, low −1.20…−1.78 ms, lowest −1.29…−1.96 ms per frame, with the affine spans. Of
+that, the affine spans alone were worth about 0.8 ms and 16 rows instead of 64 alone about 0.7 ms
+(measured separately), so without them about 0.7 ms is left; not measured again since. At `medium`
+the host shots of the three demos differ from the affine version in 1.1% of pixels (up to 23% in a
+frame looking along a wall, d3 frame 200).
 
 ---
 

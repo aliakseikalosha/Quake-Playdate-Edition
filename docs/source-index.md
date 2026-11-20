@@ -179,7 +179,7 @@ Start-up and the frame loop, memory, strings and files, console variables and co
 | [`cvar.c`](../winquake/cvar.c) | 221 | always | Console variables: registration, lookup, setting, archiving to `config.cfg`. | [core](engine/core.md#cvarh--cvarc) |
 | [`cmd.h`](../winquake/cmd.h) | 121 | header | The command buffer, tokenizer and command-table API. | [core](engine/core.md#cmdh--cmdc) |
 | [`cmd.c`](../winquake/cmd.c) | 721 | always | The command buffer, tokenizer, aliases and command table; falls back to [`defaultcfg.h`](engine/core.md#built-in-defaultcfg-defaultcfgh) when the pak has no `default.cfg`. | [core](engine/core.md#cmdh--cmdc) |
-| [`defaultcfg.h`](../winquake/defaultcfg.h) | 105 | header | The built-in `default.cfg` (D-pad and button bindings) for paks that lack one, such as the 2021 re-release's, and the port's option defaults run after any `default.cfg`. | [core](engine/core.md#built-in-defaultcfg-defaultcfgh) |
+| [`defaultcfg.h`](../winquake/defaultcfg.h) | 106 | header | The built-in `default.cfg` (D-pad and button bindings) for paks that lack one, such as the 2021 re-release's, and the port's option defaults run after any `default.cfg`. | [core](engine/core.md#built-in-defaultcfg-defaultcfgh) |
 | [`crc.h`](../winquake/crc.h) | 24 | header | `CRC_Block` and friends. | [core](engine/core.md#crch--crcc) |
 | [`crc.c`](../winquake/crc.c) | 80 | always | The 16-bit CRC, used to check `progs.dat` against the compiled-in variable layout. | [core](engine/core.md#crch--crcc) |
 | [`mathlib.h`](../winquake/mathlib.h) | 108 | header | Vector macros and the math function declarations. | [core](engine/core.md#mathlibh--mathlibc) |
@@ -233,7 +233,7 @@ Everything drawn on top of or around the 3D view. Page: [Screen, HUD, console an
 | [`console.h`](../winquake/console.h) | 46 | header | Console interface (`Con_*`). | [ui](engine/ui.md#consoleh--consolec) |
 | [`console.c`](../winquake/console.c) | 655 | always | The drop-down console and notify lines. | [ui](engine/ui.md#consoleh--consolec) |
 | [`menu.h`](../winquake/menu.h) | 39 | header | Menu entry points (`M_Init`, `M_Draw`, `M_Keydown`, `M_Menu_Options_Shortcut`). | [ui](engine/ui.md#menuh--menuc) |
-| [`menu.c`](../winquake/menu.c) | 3780 | always | All of Quake's menus, including the Playdate Options screen (Music, Crank speed, Dithering, Draw distance, Max framerate, Show FPS, …). | [ui](engine/ui.md#menuh--menuc) |
+| [`menu.c`](../winquake/menu.c) | 3799 | always | All of Quake's menus, including the Playdate Options screen (Music, Crank speed, Dithering, Draw distance, Max framerate, Show FPS, …). | [ui](engine/ui.md#menuh--menuc) |
 
 ## Server, world and physics
 
@@ -302,10 +302,10 @@ The default 3D renderer (`PD_NEW_RENDERER=ON`), written for the Playdate's memor
 
 | File | Lines | Built | What it does | Docs |
 | --- | ---: | --- | --- | --- |
-| [`pdr.h`](../winquake/pdr.h) | 279 | header · new renderer | The renderer's internal interface: constants, compact brush-data structs, shared globals, the span context. | [renderer-pdr](engine/renderer-pdr.md#pdrh) |
-| [`pdr_main.c`](../winquake/pdr_main.c) | 913 | new renderer | `R_RenderView` and the per-frame setup; owns the globals the original refresh had; interlacing. | [renderer-pdr](engine/renderer-pdr.md#pdr_mainc) |
+| [`pdr.h`](../winquake/pdr.h) | 284 | header · new renderer | The renderer's internal interface: constants, compact brush-data structs, shared globals, the span context. | [renderer-pdr](engine/renderer-pdr.md#pdrh) |
+| [`pdr_main.c`](../winquake/pdr_main.c) | 917 | new renderer | `R_RenderView` and the per-frame setup; owns the globals the original refresh had; interlacing. | [renderer-pdr](engine/renderer-pdr.md#pdr_mainc) |
 | [`pdr_world.c`](../winquake/pdr_world.c) | 1734 | new renderer | Builds the compact brush data at map load, walks the BSP front to back, keeps the per-row coverage mask, draws brush entities. | [renderer-pdr](engine/renderer-pdr.md#pdr_worldc) |
-| [`pdr_span.c`](../winquake/pdr_span.c) | 501 | new renderer | Draws one span of one face: textured, water and sky spans straight from the mip texture; the PSX-style affine span of the "Light levels" setting. | [renderer-pdr](engine/renderer-pdr.md#pdr_spanc) |
+| [`pdr_span.c`](../winquake/pdr_span.c) | 511 | new renderer | Draws one span of one face: textured (perspective-correct every 8 pixels, with the fewer colormap rows of the "Light levels" setting below high; PSX-style affine with "Texture warp"), water and sky spans straight from the mip texture. | [renderer-pdr](engine/renderer-pdr.md#pdr_spanc) |
 | [`pdr_light.c`](../winquake/pdr_light.c) | 627 | new renderer | Light blocks in place of the surface cache; light styles, dynamic lights, `R_LightPoint` and the colormap rows kept by the "Light levels" setting. | [renderer-pdr](engine/renderer-pdr.md#pdr_lightc) |
 | [`pdr_alias.c`](../winquake/pdr_alias.c) | 861 | new renderer | Alias models (monsters, items, the weapon): transform, lighting and its own triangle rasterizer. | [renderer-pdr](engine/renderer-pdr.md#pdr_aliasc) |
 | [`pdr_sprite.c`](../winquake/pdr_sprite.c) | 535 | new renderer | Sprites (explosions, bubbles) and particles. | [renderer-pdr](engine/renderer-pdr.md#pdr_spritec) |
@@ -322,7 +322,7 @@ Id Software's WinQuake renderer, built with `PD_NEW_RENDERER=OFF`. `r_*` decides
 | [`r_local.h`](../winquake/r_local.h) | 325 | header · orig. renderer | Refresh-private definitions: lighting, clipped edges, clip planes, debug cvars. | [renderer-original](engine/renderer-original.md#r_localh) |
 | [`d_iface.h`](../winquake/d_iface.h) | 244 | header | The refresh-to-driver contract (`WARP_WIDTH`, `particle_t`, the `D_*` entry points); included by [`quakedef.h`](engine/core.md#quakedefh), so also in the new-renderer build. | [renderer-original](engine/renderer-original.md#d_ifaceh) |
 | [`d_local.h`](../winquake/d_local.h) | 123 | header · orig. renderer | Driver-private definitions: the surface cache node, span parameters, texture gradients. | [renderer-original](engine/renderer-original.md#d_localh) |
-| [`r_main.c`](../winquake/r_main.c) | 1169 | orig. renderer | Frame control: `R_Init`, `R_RenderView` and the entity drawing order. | [renderer-original](engine/renderer-original.md#r_mainc) |
+| [`r_main.c`](../winquake/r_main.c) | 1171 | orig. renderer | Frame control: `R_Init`, `R_RenderView` and the entity drawing order. | [renderer-original](engine/renderer-original.md#r_mainc) |
 | [`r_misc.c`](../winquake/r_misc.c) | 542 | orig. renderer | Per-frame set-up (`R_SetupFrame`, frustum, `R_ViewChanged`) and debug helpers. | [renderer-original](engine/renderer-original.md#r_miscc) |
 | [`r_vars.c`](../winquake/r_vars.c) | 34 | orig. renderer | Definitions of the refresh globals, collected in a block to avoid cache conflicts. | [renderer-original](engine/renderer-original.md#r_varsc--d_varsc) |
 | [`d_vars.c`](../winquake/d_vars.c) | 45 | orig. renderer | Definitions of the driver globals (gradients, texture adjustments, buffers). | [renderer-original](engine/renderer-original.md#r_varsc--d_varsc) |
@@ -418,7 +418,7 @@ Runs the real engine and the real [`display.c`](port/playdate.md#displayc) on th
 
 | File | Lines | Built | What it does | Docs |
 | --- | ---: | --- | --- | --- |
-| [`hostcheck.c`](../tools/hostcheck/hostcheck.c) | 1130 | host check | The test program: scripted scenes, menu and input tests, golden frame hashes, map tours and screenshot dumps. | [tools](tools.md#toolshostcheckhostcheckc) |
+| [`hostcheck.c`](../tools/hostcheck/hostcheck.c) | 1155 | host check | The test program: scripted scenes, menu and input tests, golden frame hashes, map tours and screenshot dumps. | [tools](tools.md#toolshostcheckhostcheckc) |
 | [`build.sh`](../tools/hostcheck/build.sh) | 77 | tool | Builds [`hostcheck.c`](tools.md#toolshostcheckhostcheckc) against a source tree, in either renderer, with switches for the original code paths. | [tools](tools.md#toolshostcheckbuildsh) |
 | [`run.sh`](../tools/hostcheck/run.sh) | 17 | tool | Builds and runs the host check in its different modes. | [tools](tools.md#toolshostcheckrunsh) |
 | [`golden-compare.py`](../tools/hostcheck/golden-compare.py) | 24 | tool | Compares two golden hash files frame by frame. | [tools](tools.md#toolshostcheckgolden-comparepy) |
@@ -453,7 +453,7 @@ These pages. Start at the [documentation index](README.md).
 | [`source-index.md`](../docs/source-index.md) | — | doc | This file. | — |
 | [`building.md`](../docs/building.md) | 109 | doc | How to build for the Simulator and the device, game data, music, the main performance options. | [building](building.md) |
 | [`renderer.md`](../docs/renderer.md) | 43 | doc | How the Playdate renderer differs from the original, and device timings. | [renderer](renderer.md) |
-| [`settings.md`](../docs/settings.md) | 41 | doc | The defaults and every Options menu setting, the dithering modes and their cost. | [settings](settings.md) |
+| [`settings.md`](../docs/settings.md) | 44 | doc | The defaults and every Options menu setting, the dithering modes and their cost. | [settings](settings.md) |
 | [`profiling.md`](../docs/profiling.md) | 40 | doc | The on-device profiler and what it measured about the hardware. | [profiling](profiling.md) |
 | [`picture-check.md`](../docs/picture-check.md) | 23 | doc | Using the host check to show an optimisation does not change the picture. | [picture-check](picture-check.md) |
 | [`build-system.md`](../docs/build-system.md) | 341 | doc | CMake files, every `PD_*` option, release builds, which `pak0.pak` the `.pdx` gets, editor tasks. | [build](build-system.md) |
@@ -466,12 +466,12 @@ These pages. Start at the [documentation index](README.md).
 | [`engine/core.md`](../docs/engine/core.md) | 541 | doc | Engine core: start-up, memory, strings, files, cvars, commands, math, WADs. | [core](engine/core.md) |
 | [`engine/platform-interfaces.md`](../docs/engine/platform-interfaces.md) | 139 | doc | The video, input, sound and CD audio headers and the legacy x86 headers. | [platform-interfaces](engine/platform-interfaces.md) |
 | [`engine/client.md`](../docs/engine/client.md) | 294 | doc | The client: connection, parsing, input, demos, the camera, keys. | [client](engine/client.md) |
-| [`engine/ui.md`](../docs/engine/ui.md) | 258 | doc | Screen, HUD, console and menus (including the Options screen). | [ui](engine/ui.md) |
+| [`engine/ui.md`](../docs/engine/ui.md) | 259 | doc | Screen, HUD, console and menus (including the Options screen). | [ui](engine/ui.md) |
 | [`engine/server.md`](../docs/engine/server.md) | 249 | doc | The server, world collision and physics. | [server](engine/server.md) |
 | [`engine/quakec.md`](../docs/engine/quakec.md) | 258 | doc | The QuakeC virtual machine and its builtins. | [quakec](engine/quakec.md) |
 | [`engine/network.md`](../docs/engine/network.md) | 192 | doc | The network layer and drivers. | [network](engine/network.md) |
 | [`engine/models.md`](../docs/engine/models.md) | 172 | doc | BSP, MDL and SPR formats and the model loader. | [models](engine/models.md) |
-| [`engine/renderer-pdr.md`](../docs/engine/renderer-pdr.md) | 515 | doc | The Playdate renderer. | [renderer-pdr](engine/renderer-pdr.md) |
+| [`engine/renderer-pdr.md`](../docs/engine/renderer-pdr.md) | 520 | doc | The Playdate renderer. | [renderer-pdr](engine/renderer-pdr.md) |
 | [`engine/renderer-original.md`](../docs/engine/renderer-original.md) | 392 | doc | The original software renderer. | [renderer-original](engine/renderer-original.md) |
 | [`engine/perf-infrastructure.md`](../docs/engine/perf-infrastructure.md) | 249 | doc | Profiling, stack budgeting and the assembly. | [perf-infrastructure](engine/perf-infrastructure.md) |
 | [`demo.gif`](../docs/demo.gif) | — | doc | Demo 1 as the Playdate screen shows it (captured from the host check; used by the README). | [picture-check](picture-check.md) |

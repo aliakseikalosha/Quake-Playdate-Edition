@@ -208,8 +208,9 @@ The original Options menu was replaced by a scrolling list drawn at 2× in scree
 | Music volume, SFX volume | sliders | `bgmvolume`, `volume` |
 | Always run | checkbox | `cl_forwardspeed` / `cl_backspeed` 200 ↔ 400 (default on) |
 | **Autofire** | checkbox | `cl_autofire` (default on) |
-| **Texture detail** | low / high | `d_mipcap` 1 / 0 (default low) |
+| **Texture detail** | lowest / low / high (no wrap) | `d_mipcap` 2 / 1 / 0 (default low) |
 | **Light levels** | lowest / low / medium / high (no wrap) | `r_lightlevels` 4 / 8 / 16 / 64 (default 64; read by the renderer, [`pdr_light.c`](renderer-pdr.md#light-levels)) |
+| **Texture warp** | checkbox | `r_affine` (default off): PSX-style affine world spans, `SpanLitAffine` ([`pdr_span.c`](renderer-pdr.md#pdr_spanc)) |
 | **Interlaced** | checkbox | `r_interlace` (default off) |
 | **Dithering** | patterns / bayer / blue noise / diffusion (wraps) | `pd_dither` 0–3 (default 1, bayer) |
 | **Draw distance** | slider over 256, 384, 512, 768, 1024, 1536, 2048, 3072, unlimited | `r_maxdist` (default 1024) |

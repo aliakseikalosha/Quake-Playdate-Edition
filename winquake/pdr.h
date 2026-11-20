@@ -246,11 +246,16 @@ void PDR_AnimateLights (void);
 
 /* Light levels ("Light levels" in the Options menu, cvar r_lightlevels 4/8/16/64). Below 64 the
    world's lit spans use only that many colormap rows, picked for even steps of brightness on the
-   LCD, and are textured affinely between their two ends (PSX style): both cut the cache misses
-   that dominate span drawing. pdr_lightrows maps a colormap row to the byte offset of the row
-   used instead; NULL = all 64 rows, perspective correct every 8 pixels. */
+   LCD, which cuts the colormap's cache misses. The texture stays perspective correct every 8 pixels
+   at every level (the affine "PSX style" spans that went with it until 2026-11-20 made textures
+   swim; that is now its own option, below). pdr_lightrows maps a colormap row to the byte offset of
+   the row used instead; NULL = all 64 rows. */
 extern const unsigned short	*pdr_lightrows;
 void PDR_SetupLightLevels (void);
+/* "Texture warp" in the Options menu (cvar r_affine, off by default): the world's lit spans are
+   textured affinely between their two ends (PSX style), which saves the divide every 8 pixels and
+   some cache misses but makes textures swim on long spans. Set per frame from r_affine. */
+extern qboolean	pdr_affine;
 void PDR_MarkBmodelLights (pdr_brush_t *b, int headnode);
 int PDR_LightPoint (const vec3_t p);
 extern int	pdr_lightstyle[MAX_LIGHTSTYLES];

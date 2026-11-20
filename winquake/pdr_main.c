@@ -34,6 +34,7 @@ cvar_t	r_clearcolor = {"r_clearcolor","2"};
 cvar_t	r_waterwarp = {"r_waterwarp","1"};
 cvar_t	r_interlace = {"r_interlace","0", true};	// port: "Interlaced" in the options menu
 cvar_t	r_maxdist = {"r_maxdist","1024", true};	// port: "Draw distance" in the options menu, 0 = unlimited
+cvar_t	r_affine = {"r_affine","0", true};		// port: "Texture warp" in the options menu (PSX-style spans)
 cvar_t	r_fullbright = {"r_fullbright","0"};
 cvar_t	r_drawentities = {"r_drawentities","1"};
 cvar_t	r_drawviewmodel = {"r_drawviewmodel","1"};
@@ -60,6 +61,7 @@ int		pdr_minmip;
 float	pdr_scale_for_mip;
 float	pdr_maxdist2;
 qboolean	pdr_fullbright;
+qboolean	pdr_affine;
 float	pdr_frustum[4][4];
 float	pdr_frustum_len[4];
 float	pdr_frustum_abs[4][3];
@@ -172,6 +174,7 @@ void R_Init (void)
 	Cvar_RegisterVariable (&r_clearcolor);
 	Cvar_RegisterVariable (&r_waterwarp);
 	Cvar_RegisterVariable (&r_interlace);
+	Cvar_RegisterVariable (&r_affine);
 	Cvar_RegisterVariable (&r_maxdist);
 	Cvar_RegisterVariable (&r_fullbright);
 	Cvar_RegisterVariable (&r_drawentities);
@@ -442,6 +445,7 @@ static void PDR_SetupFrame (void)
 
 	PDR_SetupFrustum ();
 	PDR_SetupLightLevels ();
+	pdr_affine = r_affine.value != 0;
 
 	pdr_minmip = d_mipcap.value;
 	if (pdr_minmip > 3)

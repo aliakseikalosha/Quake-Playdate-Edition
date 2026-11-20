@@ -96,6 +96,7 @@ static const char port_default_cfg[] =
 	"cl_autofire 1\n"				// Autofire
 	"d_mipcap 1\n"				// Texture detail: low
 	"r_lightlevels 64\n"			// Light levels: high
+	"r_affine 0\n"				// Texture warp: off
 	"r_interlace 0\n"				// Interlaced: off
 	"pd_dither 1\n"				// Dithering: bayer
 	"r_maxdist 1024\n"			// Draw distance

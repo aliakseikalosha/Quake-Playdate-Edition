@@ -117,8 +117,11 @@ static void SpanLitWrap (byte *dst, const byte *tex, const byte *cmap, const uns
 	} while (--n);
 }
 
+/* Perspective correct every PDR_SUBDIV pixels, at every light level: with fewer light levels (rows set,
+   see pdr.h) only the colormap row is mapped. SpanLitAffine below is the "Texture warp" option's. */
 static void SpanLit (const pdr_spanctx_t *c, byte *dst, int y, int x0, int count)
 {
+	const unsigned short	*rows = pdr_lightrows;
 	float	sdivz, tdivz, zi, z, du = (float)x0, dv = (float)y;
 	float	sdivz8 = c->sdivzstepu * PDR_SUBDIV, tdivz8 = c->tdivzstepu * PDR_SUBDIV, zi8 = c->zistepu * PDR_SUBDIV;
 	int		s, t, l, snext, tnext, lnext, sstep, tstep, lstep, n;
@@ -181,12 +184,15 @@ static void SpanLit (const pdr_spanctx_t *c, byte *dst, int y, int x0, int count
 			}
 		}
 
-		if (c->tshift >= 0)
+		if (c->tshift < 0)
+			SpanLitWrap (dst, c->tex, c->colormap, rows, s + c->soff, t + c->toff, l, sstep, tstep, lstep, n,
+						 c->tw, c->th);
+		else if (rows)
+			SpanLitPow2Rows (dst, c->tex, c->colormap, rows, s + c->soff, t + c->toff, l, sstep, tstep, lstep, n,
+							 c->tshift, c->smask, c->tmask);
+		else
 			SpanLitPow2 (dst, c->tex, c->colormap, s + c->soff, t + c->toff, l, sstep, tstep, lstep, n,
 						 c->tshift, c->smask, c->tmask);
-		else
-			SpanLitWrap (dst, c->tex, c->colormap, NULL, s + c->soff, t + c->toff, l, sstep, tstep, lstep, n,
-						 c->tw, c->th);
 		dst += n;
 		s = snext;
 		t = tnext;
@@ -195,17 +201,18 @@ static void SpanLit (const pdr_spanctx_t *c, byte *dst, int y, int x0, int count
 }
 
 /*
-PSX-style span (fewer light levels, see pdr.h): s and t are exact only at the two ends of the
-span and stepped linearly in between, with no divide every 8 pixels, so textures swim a little on
-long spans in steep perspective. The light is still sampled every PDR_ASUBDIV pixels along that
-path (only additions to get there): from the ends alone, a lit patch in the middle of a long wall
-span went dark.
+PSX-style span ("Texture warp" in the Options menu, r_affine 1, see pdr.h): s and t are exact only at
+the two ends of the span and stepped linearly in between, with no divide every 8 pixels, so textures
+swim on long spans in steep perspective. The light is still sampled every PDR_ASUBDIV pixels along
+that path (only additions to get there): from the ends alone, a lit patch in the middle of a long
+wall span went dark. With fewer light levels the colormap rows are mapped as in SpanLit.
 */
 #define PDR_ASUBDIV_SHIFT	4
 #define PDR_ASUBDIV			(1 << PDR_ASUBDIV_SHIFT)
 
 static void SpanLitAffine (const pdr_spanctx_t *c, byte *dst, int y, int x0, int count)
 {
+	const unsigned short	*rows = pdr_lightrows;
 	float	sdivz, tdivz, zi, z, du = (float)x0, dv = (float)y;
 	int		s, t, l, sstep = 0, tstep = 0, n;
 
@@ -246,12 +253,15 @@ static void SpanLitAffine (const pdr_spanctx_t *c, byte *dst, int y, int x0, int
 			if (n > 1)
 				lstep = (SampleLight (c, s + sstep * (n - 1), t + tstep * (n - 1)) - l) / (n - 1);
 		}
-		if (c->tshift >= 0)
-			SpanLitPow2Rows (dst, c->tex, c->colormap, pdr_lightrows, s + c->soff, t + c->toff, l,
+		if (c->tshift < 0)
+			SpanLitWrap (dst, c->tex, c->colormap, rows, s + c->soff, t + c->toff, l,
+						 sstep, tstep, lstep, n, c->tw, c->th);
+		else if (rows)
+			SpanLitPow2Rows (dst, c->tex, c->colormap, rows, s + c->soff, t + c->toff, l,
 							 sstep, tstep, lstep, n, c->tshift, c->smask, c->tmask);
 		else
-			SpanLitWrap (dst, c->tex, c->colormap, pdr_lightrows, s + c->soff, t + c->toff, l,
-						 sstep, tstep, lstep, n, c->tw, c->th);
+			SpanLitPow2 (dst, c->tex, c->colormap, s + c->soff, t + c->toff, l,
+						 sstep, tstep, lstep, n, c->tshift, c->smask, c->tmask);
 		dst += n;
 		s = snext;
 		t = tnext;
@@ -454,7 +464,7 @@ void PDR_DrawSpan (const pdr_spanctx_t *c, int y, int x0, int x1)
 	switch (c->kind)
 	{
 	case PDR_SPAN_LIT:
-		if (pdr_lightrows)
+		if (pdr_affine)
 			SpanLitAffine (c, dst, y, x0, x1 - x0);
 		else
 			SpanLit (c, dst, y, x0, x1 - x0);
