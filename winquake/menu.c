@@ -529,35 +529,48 @@ void M_Menu_Save_f (void)
 
 // port: the load and save menus use a double-size font in screen coordinates. A slot's
 // comment (level name padded to 22 characters, then "kills:%3i/%3i") is 39 characters,
-// too wide for 400 pixels at that size, so it is shown as the level name cut to 15
-// characters and the kills as "k/t" (23 characters at most).
+// too wide for 400 pixels at that size, so it is shown as the level name, cut to what
+// fits, and "<killed>/<total>" right-aligned to the last column so the counts line up.
 #define	SLOT_SCALE		2
 #define	SLOT_CW			(8*SLOT_SCALE)
 #define	SLOT_TOP		32
 #define	SLOT_CURSOR_X	4
 #define	SLOT_TEXT_X		(SLOT_CURSOR_X + SLOT_CW + 4)
 
+// the counts are written with "%3i", so skip the padding Q_atoi doesn't
+static int M_SlotNumber (char *s)
+{
+	while (*s == ' ')
+		s++;
+	return Q_atoi (s);
+}
+
 // out holds at least 64 characters; the text is cut to what fits on the screen
 static void M_SlotText (int i, char *out)
 {
-	char		name[23];
-	char		*c = m_filenames[i], *k;
+	char		name[23], kills[24];
+	char		*c = m_filenames[i], *k, *slash;
 	int			n, fit = ((int)vid.width - SLOT_TEXT_X) / SLOT_CW;
 
 	if (fit > 63)
 		fit = 63;
-	if (!loadable[i] || strlen (c) <= 22 || !(k = strstr (c + 22, "kills:")) || !strchr (k, '/'))
+	if (!loadable[i] || strlen (c) <= 22 || !(k = strstr (c + 22, "kills:")) || !(slash = strchr (k, '/')))
 	{
 		Q_strncpy (out, c, fit);
 		out[fit] = 0;
 		return;
 	}
 
+	sprintf (kills, "%d/%d", M_SlotNumber (k + 6), M_SlotNumber (slash + 1));
 	memcpy (name, c, 22);
 	for (n=22 ; n>0 && name[n-1] == ' ' ; n--)
 		;
-	name[n > 15 ? 15 : n] = 0;
-	sprintf (out, "%-15s %d/%d", name, Q_atoi (k + 6), Q_atoi (strchr (k, '/') + 1));
+	if (n > fit - 1 - (int)strlen (kills))
+		n = fit - 1 - (int)strlen (kills);
+	if (n < 0)
+		n = 0;
+	name[n] = 0;
+	sprintf (out, "%-*s%*s", n, name, fit - n, kills);
 	out[fit] = 0;
 }
 
