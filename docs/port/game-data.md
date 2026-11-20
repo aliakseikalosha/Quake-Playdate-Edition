@@ -69,6 +69,7 @@ if (!f)
 	if (!Q_strcmp (Cmd_Argv(1), "default.cfg"))
 	{
 		Con_Printf ("execing default.cfg (built in)\n");
+		Cbuf_InsertText ((char *)port_default_cfg);	// the port's option defaults, after it
 		Cbuf_InsertText ((char *)default_cfg);
 		return;
 	}

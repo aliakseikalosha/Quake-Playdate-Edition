@@ -78,4 +78,28 @@ static const char default_cfg[] =
 	"volume 0.7\n"
 	"sensitivity 3\n";
 
+/*
+ * The port's option defaults (the Options menu's rows), run right after default.cfg, whichever it is
+ * (Cmd_Exec_f), so config.cfg still overrides them and "Reset defaults" gets them too. They are the
+ * settings the game was played with on a Playdate (2026-11-19): brighter-than-default dark (gamma 0.85),
+ * a faster crank, always run, high light levels, no interlacing, Bayer dithering everywhere, a longer
+ * draw distance and no frame rate cap. The cvar definitions carry the same values.
+ */
+static const char port_default_cfg[] =
+	"gamma 0.85\n"				// Brightness
+	"crank_speed 2.6\n"			// Crank speed
+	"bgmenabled 1\n"				// Music
+	"bgmvolume 1\n"				// Music volume
+	"volume 0.7\n"				// Sound volume
+	"cl_forwardspeed 400\n"		// Always run
+	"cl_backspeed 400\n"
+	"cl_autofire 1\n"				// Autofire
+	"d_mipcap 1\n"				// Texture detail: low
+	"r_lightlevels 64\n"			// Light levels: high
+	"r_interlace 0\n"				// Interlaced: off
+	"pd_dither 1\n"				// Dithering: bayer
+	"r_maxdist 1024\n"			// Draw distance
+	"pd_maxfps 0\n"				// Max framerate: unlimited
+	"scr_showfps 1\n";			// Show FPS
+
 #endif

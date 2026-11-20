@@ -378,7 +378,7 @@ typedef struct cvar_s {
 ```
 
 ```c
-cvar_t crank_speed = {"crank_speed", "1.4", true};      // name, default, archive
+cvar_t crank_speed = {"crank_speed", "2.6", true};      // name, default, archive
 Cvar_RegisterVariable (&crank_speed);                    // once, in an init function
 if (crank_speed.value > 2) { ... }                       // read in place
 Cvar_SetValue ("crank_speed", 1.0f);                     // set from C
@@ -463,6 +463,11 @@ A `static const char default_cfg[]` with the same commands as the shareware pak'
 | Menus and screen | `ESCAPE` `togglemenu`, function keys, `PAUSE`, `~` and `` ` `` `toggleconsole`, `+` `=` `-` size keys |
 | Mouse | `MOUSE1` `+attack`, `MOUSE2` `+forward`, `MOUSE3` and `\` `+mlook` |
 | Default cvars | `viewsize 100`, `gamma 1.0`, `volume 0.7`, `sensitivity 3` |
+
+`static const char port_default_cfg[]` in the same file holds the port's option defaults (the Options menu's rows: `gamma 0.85`,
+`crank_speed 2.6`, always run, `r_lightlevels 64`, `r_interlace 0`, `pd_dither 1`, `r_maxdist 1024`, `pd_maxfps 0`, …; see
+[Settings](../settings.md)). `Cmd_Exec_f` runs it right after any `default.cfg`, the pak's or the built-in one, so it comes before
+`config.cfg` at start-up and *Reset defaults* gets it too. The cvar definitions carry the same values.
 
 On the Playdate the buttons reach these bindings as keys: [`poll_input`](../port/playdate.md#input-mapping) sends `K_UPARROW`,
 `K_CTRL`, … and Quake looks the command up in `keybindings[key]`.

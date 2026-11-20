@@ -7,3 +7,9 @@ build-*/
 bench-results/
 tools/hostcheck/out/
 Art/Video/
+tools/qpe/out/
+__pycache__/
+# the qpe mod's pictures are derived from id's game data (docs/port/qpe.md)
+mods/*/art/
+mods/*/orig/
+mods/*/art-*/

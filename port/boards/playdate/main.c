@@ -16,9 +16,11 @@
  * While a demo is playing (title screen) A and B open Quake's menu.
  *
  * Mods and mission packs: Quake's main menu lists the game folders next to id1 (Mods) and
- * restarts the game in the one picked; Data/game.txt remembers it for the next launches.
+ * restarts the game in the one picked; Data/game.txt remembers it for the next launches. Until
+ * one is picked the game starts in Quake: Playdate Edition (qpe), when its folder is there.
  * Launch arguments (Simulator command line, `run` on the device console) are Quake's own command
- * line instead, e.g. "-game mymod" or "-hipnotic". Holding B while the game starts ignores both.
+ * line instead, e.g. "-game mymod" or "-hipnotic". Holding B while the game starts ignores all of
+ * these and starts plain Quake.
  */
 
 #include <setjmp.h>
@@ -102,7 +104,9 @@ void *qembd_allocmain(size_t size)
 
 /* ---------------------------------------------------------- game folder */
 
-#define GAME_FILE "game.txt" /* in Data: the game folder the Mods menu picked; absent = id1 only */
+#define GAME_FILE "game.txt" /* in Data: the game folder the Mods menu picked ("id1" = plain Quake) */
+#define DEFAULT_GAME "qpe"    /* the game folder when none was picked (Quake: Playdate Edition) */
+#define BASE_GAME "id1"
 #define MAX_ARGS 16
 
 static char game_dir[MAX_QPATH]; /* the folder Quake started in, "" = id1 only */
@@ -133,25 +137,27 @@ static void read_game_file(char *out, int size)
 	out[strcspn(out, "\r\n")] = '\0';
 }
 
-/* The Mods menu's choice: remember it and start again (kEventTerminate saves the options first) */
+/* The Mods menu's choice: remember it and start again (kEventTerminate saves the options first).
+ * Plain Quake ("") is remembered as "id1": no file means the default game. */
 void qembd_restart(const char *gamedir)
 {
 	SDFile *f;
+	const char *name = gamedir[0] ? gamedir : BASE_GAME;
 
-	if (gamedir[0] && (f = qembd_pd->file->open(GAME_FILE, kFileWrite)))
+	if ((f = qembd_pd->file->open(GAME_FILE, kFileWrite)))
 	{
-		qembd_pd->file->write(f, gamedir, strlen(gamedir));
+		qembd_pd->file->write(f, name, strlen(name));
 		qembd_pd->file->close(f);
 	}
-	else
-		qembd_pd->file->unlink(GAME_FILE, 0);
 	qembd_pd->system->restartGame("");
 }
 
 /*
  * Quake's command line: the launch arguments if there are any, else "-game <folder>" from
- * GAME_FILE. B held down at start-up skips both and forgets GAME_FILE, so a mod that cannot
- * start (or crashes the device) does not lock the game out.
+ * GAME_FILE ("id1": none), else "-game qpe" (DEFAULT_GAME) when that folder exists. B held down at
+ * start-up skips all of them and forgets GAME_FILE, so a mod that cannot start (or crashes the
+ * device) does not lock the game out: plain Quake this time, the default again at the next launch
+ * unless Quake is picked in the Mods menu.
  */
 static int build_args(char **argv)
 {
@@ -199,14 +205,19 @@ static int build_args(char **argv)
 	else
 	{
 		read_game_file(buf, sizeof(buf));
-		if (buf[0] && strlen(buf) < sizeof(game_dir) && folder_exists(buf))
+		if (buf[0] && strcmp(buf, BASE_GAME) && !(strlen(buf) < sizeof(game_dir) && folder_exists(buf)))
+		{
+			qembd_pd->file->unlink(GAME_FILE, 0); /* the folder is gone: the default again */
+			buf[0] = '\0';
+		}
+		if (!buf[0] && folder_exists(DEFAULT_GAME))
+			strcpy(buf, DEFAULT_GAME);
+		if (buf[0] && strcmp(buf, BASE_GAME))
 		{
 			strcpy(game_dir, buf);
 			argv[argc++] = game_opt;
 			argv[argc++] = game_dir;
 		}
-		else if (buf[0])
-			qembd_pd->file->unlink(GAME_FILE, 0); /* the folder is gone */
 	}
 	argv[argc] = NULL;
 	return argc;

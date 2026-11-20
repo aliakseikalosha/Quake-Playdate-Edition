@@ -215,8 +215,8 @@ float CL_KeyState (kbutton_t *key)
 
 cvar_t	cl_autofire = {"cl_autofire","1", true};	// port: fire when an enemy is in the crosshair
 cvar_t	cl_upspeed = {"cl_upspeed","200"};
-cvar_t	cl_forwardspeed = {"cl_forwardspeed","200", true};
-cvar_t	cl_backspeed = {"cl_backspeed","200", true};
+cvar_t	cl_forwardspeed = {"cl_forwardspeed","400", true};	// port: always run by default (defaultcfg.h)
+cvar_t	cl_backspeed = {"cl_backspeed","400", true};
 cvar_t	cl_sidespeed = {"cl_sidespeed","350"};
 
 cvar_t	cl_movespeedkey = {"cl_movespeedkey","2.0"};

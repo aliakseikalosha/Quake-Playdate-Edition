@@ -301,6 +301,7 @@ void Cmd_Exec_f (void)
 		if (!Q_strcmp (Cmd_Argv(1), "default.cfg"))
 		{
 			Con_Printf ("execing default.cfg (built in)\n");
+			Cbuf_InsertText ((char *)port_default_cfg);
 			Cbuf_InsertText ((char *)default_cfg);
 			return;
 		}
@@ -311,6 +312,9 @@ void Cmd_Exec_f (void)
 
 	// the file may not end in a newline (the re-release's quake.rc does not), which would glue
 	// its last command to whatever is queued behind it
+	// after default.cfg: the port's option defaults (defaultcfg.h), which it does not know about
+	if (!Q_strcmp (Cmd_Argv(1), "default.cfg"))
+		Cbuf_InsertText ((char *)port_default_cfg);
 	Cbuf_InsertText ("\n");
 	Cbuf_InsertText (f);
 	Hunk_FreeToLowMark (mark);

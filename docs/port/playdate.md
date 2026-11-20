@@ -85,11 +85,14 @@ back to the `setjmp` in `update()`. `qembd_quit` (called by `Sys_Quit`) does the
 
 Quake's command line is built by `build_args` when `ST_INIT` starts ([Mods and mission packs](mods.md)):
 
-- **B held**: no arguments, and `Data/game.txt` is deleted (plain Quake, the choice forgotten).
+- **B held**: no arguments, and `Data/game.txt` is deleted (plain Quake this time, the choice forgotten).
 - **Launch arguments** (`getLaunchArgs`: the Simulator's command line, the device console's `run`): split at spaces and passed as they are.
-- Otherwise **`game.txt`**: `-game <folder>` if the folder exists (`listfiles` succeeds on it); a stale `game.txt` is deleted.
+- Otherwise **`game.txt`**: `id1` means plain Quake (no arguments); another folder gives `-game <folder>` if it exists (`listfiles`
+  succeeds on it), and a stale `game.txt` is deleted.
+- Without a `game.txt`: **`-game qpe`** (`DEFAULT_GAME`, [Quake: Playdate Edition](qpe.md)) when the `qpe` folder exists, else plain
+  Quake.
 
-`qembd_restart(gamedir)` (the Mods menu) writes `game.txt` (or deletes it for Quake) and calls `restartGame("")`. The system then sends
+`qembd_restart(gamedir)` (the Mods menu) writes `game.txt`, `id1` for Quake (`BASE_GAME`), and calls `restartGame("")`. The system then sends
 `kEventTerminate` (options saved, below) and starts the game again, which reads `game.txt`.
 
 ### Time and memory hooks

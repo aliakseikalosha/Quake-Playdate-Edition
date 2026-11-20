@@ -279,6 +279,7 @@ extern cvar_t bgmenabled;
 extern cvar_t pd_maxfps;
 extern cvar_t pd_dither;
 extern cvar_t r_lightlevels;
+extern cvar_t v_gamma;
 #include <menu.h>
 
 static int menu_fail;
@@ -513,12 +514,12 @@ static int menu_test(void)
 	for (i = 0; i < 2; i++)
 		press(K_DOWNARROW);
 	MCHECK(options_cursor == 2, "2 x down reaches the Crank speed row");
-	MCHECK(crank_speed.value == 1.4f, "crank speed starts at 1.4");
+	MCHECK(crank_speed.value == 2.6f, "crank speed starts at 2.6");
 	press(K_RIGHTARROW);
-	MCHECK(crank_speed.value == 1.6f, "right: 1.6");
+	MCHECK(crank_speed.value == 2.8f, "right: 2.8");
 	press(K_LEFTARROW);
 	press(K_LEFTARROW);
-	MCHECK(crank_speed.value == 1.2f, "left twice: 1.2");
+	MCHECK(crank_speed.value == 2.4f, "left twice: 2.4");
 	for (i = 0; i < 30; i++)
 		press(K_LEFTARROW);
 	MCHECK(crank_speed.value == 0.2f, "crank speed stops at 0.2");
@@ -557,9 +558,7 @@ static int menu_test(void)
 
 	press(K_DOWNARROW);
 	MCHECK(options_cursor == 9, "down reaches the Light levels row");
-	MCHECK(r_lightlevels.value == 16, "light levels start on medium (16)");
-	press(K_RIGHTARROW);
-	MCHECK(r_lightlevels.value == 64, "right: high (64)");
+	MCHECK(r_lightlevels.value == 64, "light levels start on high (64)");
 	press(K_RIGHTARROW);
 	MCHECK(r_lightlevels.value == 64, "right at high stays there (no wrap-around)");
 	press(K_LEFTARROW);
@@ -576,22 +575,21 @@ static int menu_test(void)
 
 	press(K_DOWNARROW);
 	MCHECK(options_cursor == 10, "down reaches the Interlaced row");
-	MCHECK(r_interlace.value == 1, "interlaced starts on");
-	dump_lcd("interlace-on");
-	press(K_RIGHTARROW);
+	MCHECK(r_interlace.value == 0, "interlaced starts off");
 	dump_lcd("interlace-off");
-	MCHECK(r_interlace.value == 0, "right: interlaced off");
+	press(K_RIGHTARROW);
+	dump_lcd("interlace-on");
+	MCHECK(r_interlace.value == 1, "right: interlaced on");
 	press(K_LEFTARROW);
-	MCHECK(r_interlace.value == 1, "left: on again");
+	MCHECK(r_interlace.value == 0, "left: off again");
 	press(K_ENTER);
-	MCHECK(r_interlace.value == 0, "enter toggles too");
+	MCHECK(r_interlace.value == 1, "enter toggles too");
+	press(K_ENTER);
+	MCHECK(r_interlace.value == 0, "and back (what the file below saves)");
 
 	press(K_DOWNARROW);
 	MCHECK(options_cursor == 11, "down reaches the Dithering row");
-	MCHECK(pd_dither.value == 0, "dithering starts on patterns (pd_dither 0)");
-	dump_lcd("dither-patterns");
-	press(K_RIGHTARROW);
-	MCHECK(pd_dither.value == 1, "right: bayer");
+	MCHECK(pd_dither.value == 1, "dithering starts on bayer (pd_dither 1)");
 	dump_lcd("dither-bayer");
 	press(K_RIGHTARROW);
 	MCHECK(pd_dither.value == 2, "right: blue noise");
@@ -601,6 +599,7 @@ static int menu_test(void)
 	dump_lcd("dither-diffusion");
 	press(K_RIGHTARROW);
 	MCHECK(pd_dither.value == 0, "right from diffusion wraps to patterns");
+	dump_lcd("dither-patterns");
 	press(K_LEFTARROW);
 	MCHECK(pd_dither.value == 3, "left from patterns wraps to diffusion");
 	press(K_ENTER);
@@ -611,9 +610,9 @@ static int menu_test(void)
 	press(K_DOWNARROW);
 	MCHECK(options_cursor == 12, "down reaches the Draw distance row");
 	dump_lcd("options-bottom");
-	MCHECK(r_maxdist.value == 512, "draw distance starts at 512");
+	MCHECK(r_maxdist.value == 1024, "draw distance starts at 1024");
 	press(K_RIGHTARROW);
-	MCHECK(r_maxdist.value == 768, "right: 768");
+	MCHECK(r_maxdist.value == 1536, "right: 1536");
 	for (i = 0; i < 20; i++)
 		press(K_RIGHTARROW);
 	MCHECK(r_maxdist.value == 0, "the right end is unlimited (r_maxdist 0)");
@@ -629,18 +628,18 @@ static int menu_test(void)
 
 	press(K_DOWNARROW);
 	MCHECK(options_cursor == 13, "down reaches the Max framerate row");
-	MCHECK(pd_maxfps.value == 30, "max framerate starts at 30");
-	press(K_LEFTARROW);
-	MCHECK(pd_maxfps.value == 30, "left at 30 stays 30");
-	press(K_RIGHTARROW);
-	MCHECK(pd_maxfps.value == 50, "right: 50");
-	press(K_RIGHTARROW);
-	MCHECK(pd_maxfps.value == 0, "right: unlimited (0)");
+	MCHECK(pd_maxfps.value == 0, "max framerate starts unlimited (0)");
 	dump_lcd("options-maxfps");
 	press(K_RIGHTARROW);
 	MCHECK(pd_maxfps.value == 0, "right at unlimited stays unlimited");
 	press(K_LEFTARROW);
 	MCHECK(pd_maxfps.value == 50, "left: 50");
+	press(K_LEFTARROW);
+	MCHECK(pd_maxfps.value == 30, "left: 30");
+	press(K_LEFTARROW);
+	MCHECK(pd_maxfps.value == 30, "left at 30 stays 30");
+	press(K_RIGHTARROW);
+	MCHECK(pd_maxfps.value == 50, "right: 50");
 
 	press(K_DOWNARROW);
 	MCHECK(options_cursor == 14, "down reaches the Show FPS row");
@@ -705,14 +704,16 @@ static int menu_test(void)
 	press(K_ENTER);
 	run(3);
 	MCHECK(d_mipcap.value == 1, "reset to defaults sets texture detail back to low");
-	MCHECK(r_lightlevels.value == 16, "reset to defaults sets light levels back to medium (16)");
-	MCHECK(r_interlace.value == 1, "reset to defaults turns interlaced on");
-	MCHECK(pd_dither.value == 0, "reset to defaults sets dithering back to patterns");
-	MCHECK(r_maxdist.value == 512, "reset to defaults sets the draw distance back to 512");
-	MCHECK(crank_speed.value == 1.4f, "reset to defaults sets crank speed back to 1.4");
-	MCHECK(pd_maxfps.value == 30, "reset to defaults sets max framerate back to 30");
+	MCHECK(r_lightlevels.value == 64, "reset to defaults sets light levels back to high (64)");
+	MCHECK(r_interlace.value == 0, "reset to defaults turns interlaced off");
+	MCHECK(pd_dither.value == 1, "reset to defaults sets dithering back to bayer");
+	MCHECK(r_maxdist.value == 1024, "reset to defaults sets the draw distance back to 1024");
+	MCHECK(crank_speed.value == 2.6f, "reset to defaults sets crank speed back to 2.6");
+	MCHECK(pd_maxfps.value == 0, "reset to defaults sets max framerate back to unlimited");
 	MCHECK(scr_showfps.value == 1, "reset to defaults turns show fps on");
 	MCHECK(bgmenabled.value == 1, "reset to defaults turns music on");
+	MCHECK(v_gamma.value == 0.85f, "reset to defaults sets the brightness back to gamma 0.85");
+	MCHECK(cl_forwardspeed.value == 400, "reset to defaults turns always run on");
 	press(K_ESCAPE);
 	cfg = slurp(path);
 	MCHECK(cfg && strstr(cfg, "d_mipcap \"1"), "and the saved file says so");
@@ -1037,11 +1038,13 @@ int main(int argc, char **argv)
 	if (qembd_init(ac, av) != 0)
 		return 1;
 
-	/* The port's picture options default to low texture detail, interlaced and a draw distance;
-	 * the regression modes compare against the original picture, so switch them off there
-	 * (the menu test checks the real defaults) */
+	/* The port's options default to low texture detail, a draw distance, Bayer dithering, a brighter
+	 * gamma, always run and others (winquake/defaultcfg.h); the regression modes compare against the
+	 * original picture and the goldens recorded before those defaults, so they run with the original's
+	 * values (the menu test checks the real defaults) */
 	if (!getenv("HMENU"))
-		cmd("d_mipcap 0\nr_lightlevels 64\nr_interlace 0\nr_maxdist 0\nscr_showfps 0\n");
+		cmd("d_mipcap 0\nr_lightlevels 64\nr_interlace 0\nr_maxdist 0\nscr_showfps 0\n"
+		    "pd_dither 0\ngamma 1\ncl_forwardspeed 200\ncl_backspeed 200\ncrank_speed 1.4\npd_maxfps 30\n");
 	if (getenv("HINTERLACE"))	/* HINTERLACE=1: every mode below with interlaced rendering */
 		cmd("r_interlace 1\n");
 	if (getenv("HCMD")) {		/* HCMD="...": console commands before any mode below */

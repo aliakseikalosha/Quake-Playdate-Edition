@@ -1143,15 +1143,15 @@ static int	options_top;	// first row shown
 static qboolean	options_to_game;	// opened by M_Menu_Options_Shortcut: Escape goes back to the game
 
 // crank turn speed (degrees of view turn per degree of crank), see port/boards/playdate/main.c
-cvar_t	crank_speed = {"crank_speed", "1.4", true};
+cvar_t	crank_speed = {"crank_speed", "2.6", true};
 
 // music on/off ("Music"; the "cd on" and "cd off" commands set it too), see port/boards/playdate/cd_pd.c;
 // how loud it is is bgmvolume
 cvar_t	bgmenabled = {"bgmenabled", "1", true};
 
 // frame rate cap: the rate the Playdate calls the game at (display->setRefreshRate,
-// port/boards/playdate/main.c), 0 = unlimited; 30 by default
-cvar_t	pd_maxfps = {"pd_maxfps", "30", true};
+// port/boards/playdate/main.c), 0 = unlimited (the default)
+cvar_t	pd_maxfps = {"pd_maxfps", "0", true};
 static const int	maxfps_steps[] = {30, 50, 0};
 #define	NUM_MAXFPS_STEPS	(int)(sizeof(maxfps_steps) / sizeof(maxfps_steps[0]))
 
@@ -1164,13 +1164,13 @@ static int M_MaxFpsStep (void)
 
 // how the 1-bit display is dithered (port/boards/playdate/display.c): 2x2 patterns in the 3D view
 // and Bayer elsewhere, Bayer everywhere, blue noise everywhere, or error diffusion
-cvar_t	pd_dither = {"pd_dither", "0", true};
+cvar_t	pd_dither = {"pd_dither", "1", true};	// bayer by default
 static const char	*const dither_names[] = {"patterns", "bayer", "blue noise", "diffusion"};
 #define	NUM_DITHER_MODES	(int)(sizeof(dither_names) / sizeof(dither_names[0]))
 
 // light levels of the world (winquake/pdr_light.c): below 64 the new renderer uses only that many
 // colormap rows and PSX-style affine texturing, which is faster; lowest to highest
-cvar_t	r_lightlevels = {"r_lightlevels", "16", true};
+cvar_t	r_lightlevels = {"r_lightlevels", "64", true};	// high by default
 static const int	lightlevel_steps[] = {4, 8, 16, 64};
 static const char	*const lightlevel_names[] = {"lowest", "low", "medium", "high"};
 #define	NUM_LIGHTLEVEL_STEPS	(int)(sizeof(lightlevel_steps) / sizeof(lightlevel_steps[0]))
@@ -1552,18 +1552,8 @@ void M_Options_Key (int k)
 		switch (options_cursor)
 		{
 		case OPT_RESET:
+			// default.cfg, then the port's own options (Cmd_Exec_f runs port_default_cfg after it)
 			Cbuf_AddText ("exec default.cfg\n");
-			// port options that default.cfg does not know about: back to their
-			// defaults (keep in step with the cvar definitions)
-			Cvar_SetValue ("d_mipcap", 1);
-			Cvar_SetValue ("r_lightlevels", 16);
-			Cvar_SetValue ("r_interlace", 1);
-			Cvar_SetValue ("pd_dither", 0);
-			Cvar_SetValue ("r_maxdist", 512);
-			Cvar_SetValue ("crank_speed", 1.4f);
-			Cvar_SetValue ("pd_maxfps", 30);
-			Cvar_SetValue ("scr_showfps", 1);
-			Cvar_SetValue ("bgmenabled", 1);
 			host_options_dirty = true;
 			break;
 		case OPT_VIDEO:

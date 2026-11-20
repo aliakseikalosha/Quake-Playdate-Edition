@@ -23,10 +23,12 @@ A folder is listed if it holds a `.pak` file, a `progs.dat`, or a `maps/`, `prog
 | `mg1` | Dimension of the Machine | Re-release add-on; the standard status bar. |
 | `impel` | Abyss of Pandemonium | Impel Development Team's 1998 episode (its own `progs.dat` next to the pak). |
 | `as` | Aftershock | Head Games' 1997 level pack: maps and demos only, played with Quake's own QuakeC. |
+| `qpe` | Quake: Playdate Edition | This port's own mod: the font, UI pictures and model skins redrawn for the 1-bit screen ([Quake: Playdate Edition](qpe.md)). |
 | anything else | its folder name | Sorted by name after Quake. |
 
-Most mods need the registered game (`pak1.pak` in `id1`): with only the shareware `pak0.pak` the engine stops with
-*"You must have the registered version to use modified games"*, as the original does.
+Most mods need the registered game's data (`pak1.pak` in `id1`: its monsters, models and sounds). The engine itself does not refuse
+them: its `COM_CheckRegistered` counts every game as registered, unlike the original, which stopped with *"You must have the
+registered version to use modified games"*.
 
 ## The packs in this tree
 
@@ -97,11 +99,13 @@ Main menu → **Mods** (the last item, under Help/Ordering). The list shows the 
 (*Restart the game in …? Progress not saved is lost.*); A again saves the options and restarts the game in it, B goes back.
 A on the running game, or B, returns to the main menu.
 
-The choice is remembered in `Data/<bundle id>/game.txt` (one line, the folder name), so the next launches start there too, until
-Quake is picked again. If the folder has since been deleted, the game starts as Quake and forgets the choice.
+The choice is remembered in `Data/<bundle id>/game.txt` (one line, the folder name; `id1` for Quake), so the next launches start
+there too, until another is picked. **Until anything is picked, the game starts in Quake: Playdate Edition** (`qpe`, this port's own
+mod, see [qpe](qpe.md)) when its folder is there, else in Quake. If the picked folder has since been deleted, the choice is forgotten
+and the game starts as if none was made.
 
 **Hold B while the game starts** to start plain Quake and forget the choice: a mod that stops with an error, or crashes the device,
-cannot lock the game out. A mod that stops with an error says so on the error screen.
+cannot lock the game out. The next launch starts in the default (qpe) again; pick Quake in Mods to stay in it. A mod that stops with an error says so on the error screen.
 
 Each game folder keeps its own `config.cfg` and saved games (Quake writes them into the running game's folder), and its music (`QuakeNN.pda` / `.mp3`) is looked for
 in `<folder>/music/` first, then in `id1/music/` (see [`cd_pd.c`](playdate.md#cd_pdc)).
@@ -115,12 +119,12 @@ e.g. `-game mymod`, `-hipnotic`, `+map e1m1`. When there are any, `game.txt` is 
 
 | Piece | Where | What |
 | --- | --- | --- |
-| Game folder at start-up | `port/boards/playdate/main.c`, `build_args` | Launch arguments if there are any, else `-game <game.txt>`; B held: neither. The result is Quake's `argv` for `qembd_init`. |
+| Game folder at start-up | `port/boards/playdate/main.c`, `build_args` | Launch arguments if there are any, else `-game <game.txt>` (`id1`: none), else `-game qpe` when that folder exists; B held: none of them. The result is Quake's `argv` for `qembd_init`. |
 | Search path | `winquake/common.c`, `COM_InitFilesystem` | Unchanged: `-game` puts the folder and its `pakN.pak` files in front of `id1`. New: `-game hipnotic` / `-game rogue` also set `hipnotic` / `rogue` (and clear `standard_quake`), as `-hipnotic` / `-rogue` do. |
 | Names | `common.c`, `COM_GameDirName`, `COM_GameTitle` | The running folder's name; a folder's title (the table above). |
 | Listing folders | `Sys_ListDir` in `port/boards/playdate/fio.c` (`playdate->file->listfiles`) and `port/fio/fio_posix.c` (`opendir`) | `listfiles` shows the `.pdx` and the Data folder as one, so a folder in either is found, and `id1` once. |
 | The menu | `winquake/menu.c`, `M_Menu_Mods_f` (`menu_mods` command), `M_ScanMods` | The main menu's sixth item; drawn at the Options menu's double size. |
-| Restart | `qembd_restart(gamedir)` in `main.c` | Writes or deletes `game.txt`, then `playdate->system->restartGame("")`; the system sends `kEventTerminate` (which saves the options) and starts the game again. |
+| Restart | `qembd_restart(gamedir)` in `main.c` | Writes `game.txt` (`id1` for Quake), then `playdate->system->restartGame("")`; the system sends `kEventTerminate` (which saves the options) and starts the game again. |
 
 ### Mission packs
 
@@ -145,7 +149,8 @@ The port's own code had to learn the packs:
 ## Release build
 
 A shareware release (`scripts/release-device.sh demo` with a `Source/id1/pak0_demo.pak`) leaves every game folder other than `id1` out of the `.pdx`,
-as it does the music and `pak1.pak`: the shareware does not run mods, and the mission packs are not redistributable. See
+as it does the music and `pak1.pak` (the mission packs are not redistributable), except `qpe`: it keeps the part of
+[Quake: Playdate Edition](qpe.md#the-shareware-part-and-the-patch) whose originals the shareware has. See
 [which pak0.pak the `.pdx` gets](../build-system.md#which-pak0pak-the-pdx-gets).
 
 ## What was checked, and what was not

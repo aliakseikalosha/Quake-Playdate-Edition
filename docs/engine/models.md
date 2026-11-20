@@ -136,7 +136,8 @@ byte    *Mod_LeafPVS (mleaf_t *leaf, model_t *model);          // that leaf's vi
 | --- | --- |
 | `Mod_ForName(name, crash)` / `Mod_FindName` / `Mod_LoadModel` | Find a slot by name in `mod_known[]` (`MAX_MOD_KNOWN` 384; 256 in the original), load the file with `COM_LoadStackFile` / `COM_LoadHunkFile`, dispatch on the 4-byte header (`IDPOLYHEADER`, `IDSPRITEHEADER`, otherwise BSP). |
 | `Mod_LoadBrushModel` | Loads each lump in turn: `Mod_LoadVertexes`, `Mod_LoadEdges`, `Mod_LoadSurfedges`, `Mod_LoadTextures`, `Mod_LoadLighting`, `Mod_LoadPlanes`, `Mod_LoadTexinfo`, `Mod_LoadFaces`, `Mod_LoadMarksurfaces`, `Mod_LoadVisibility`, `Mod_LoadLeafs`, `Mod_LoadNodes` (`Mod_SetParent`), `Mod_LoadClipnodes`, `Mod_MakeHull0`, `Mod_LoadEntities`, `Mod_LoadSubmodels`; then splits the file into one `model_t` per submodel. |
-| `Mod_LoadTextures` | Reads the mip textures, loads the sky specially (`R_InitSky`), and links animated textures (`+0name`, `+1name` … and alternates `+aname`). |
+| `Mod_LoadTextures` | Reads the mip textures, replaces some from `textures.dat` (`Mod_ReplaceTextures`), loads the sky specially (`R_InitSky`), and links animated textures (`+0name`, `+1name` … and alternates `+aname`). |
+| `Mod_ReplaceTextures` | Port addition, for the [qpe mod](../port/qpe.md#where-things-are): `textures.dat` in the game folder (a loose file) holds new pixels, all four mip levels, each for the texture of a name and size whose original pixels have a given CRC. Read in blocks of 32 directory entries; a map without matches costs one failed file lookup. |
 | `CalcSurfaceExtents(s)` | A face's texture bounds, rounded to 16-texel lightmap cells. |
 | `Mod_LoadAliasModel` | Converts an `.mdl` into the cache: header, skins (`Mod_LoadAliasSkin`/`SkinGroup`), texture coordinates, triangles, frames (`Mod_LoadAliasFrame`/`Group`); computes the bounding box. |
 | `Mod_LoadSpriteModel`, `Mod_LoadSpriteFrame`, `Mod_LoadSpriteGroup` | Same for sprites. |

@@ -123,9 +123,9 @@ cvar_t	r_timegraph = {"r_timegraph","0"};
 cvar_t	r_graphheight = {"r_graphheight","10"};
 cvar_t	r_clearcolor = {"r_clearcolor","2"};
 cvar_t	r_waterwarp = {"r_waterwarp","1"};
-cvar_t	r_interlace = {"r_interlace","1", true};	// port: "Interlaced" in the options menu (on by default)
+cvar_t	r_interlace = {"r_interlace","0", true};	// port: "Interlaced" in the options menu (off by default)
 int		r_interlace_skip = 2;	// see d_iface.h
-cvar_t	r_maxdist = {"r_maxdist","512", true};	// port: "Draw distance" in the options menu, 0 = unlimited
+cvar_t	r_maxdist = {"r_maxdist","1024", true};	// port: "Draw distance" in the options menu, 0 = unlimited
 float	r_maxdist2;				// r_maxdist squared for this frame, 0 = unlimited
 cvar_t	r_fullbright = {"r_fullbright","0"};
 cvar_t	r_drawentities = {"r_drawentities","1"};

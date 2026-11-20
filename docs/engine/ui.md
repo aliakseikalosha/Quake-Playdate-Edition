@@ -201,30 +201,30 @@ The original Options menu was replaced by a scrolling list drawn at 2× in scree
 
 | Row | Control | Cvar / effect |
 | --- | --- | --- |
-| Reset defaults | Enter | Runs `exec default.cfg`, then sets the port's cvars back to their defaults (see below). |
-| Brightness | slider | `gamma` 0.5–1.0 |
-| **Crank speed** | slider (0.2 steps, 0.2–3) | `crank_speed` (default 1.4) |
+| Reset defaults | Enter | Runs `exec default.cfg`, which `Cmd_Exec_f` follows with the port's own defaults (`port_default_cfg`, see below). |
+| Brightness | slider | `gamma` 0.5–1.0 (default 0.85) |
+| **Crank speed** | slider (0.2 steps, 0.2–3) | `crank_speed` (default 2.6) |
 | **Music** | checkbox | `bgmenabled` (default on); off stops the music, on brings the level's track back ([`cd_pd.c`](../port/playdate.md#cd_pdc)) |
 | Music volume, SFX volume | sliders | `bgmvolume`, `volume` |
-| Always run | checkbox | `cl_forwardspeed` / `cl_backspeed` 200 ↔ 400 |
-| **Autofire** | checkbox | `cl_autofire` |
-| **Texture detail** | low / high | `d_mipcap` 1 / 0 |
-| **Light levels** | lowest / low / medium / high (no wrap) | `r_lightlevels` 4 / 8 / 16 / 64 (default 16; read by the renderer, [`pdr_light.c`](renderer-pdr.md#light-levels)) |
-| **Interlaced** | checkbox | `r_interlace` |
-| **Dithering** | patterns / bayer / blue noise / diffusion (wraps) | `pd_dither` 0–3 |
-| **Draw distance** | slider over 256, 384, 512, 768, 1024, 1536, 2048, 3072, unlimited | `r_maxdist` |
-| **Max framerate** | 30 / 50 / unlimited | `pd_maxfps` |
-| **Show FPS** | checkbox | `scr_showfps` |
+| Always run | checkbox | `cl_forwardspeed` / `cl_backspeed` 200 ↔ 400 (default on) |
+| **Autofire** | checkbox | `cl_autofire` (default on) |
+| **Texture detail** | low / high | `d_mipcap` 1 / 0 (default low) |
+| **Light levels** | lowest / low / medium / high (no wrap) | `r_lightlevels` 4 / 8 / 16 / 64 (default 64; read by the renderer, [`pdr_light.c`](renderer-pdr.md#light-levels)) |
+| **Interlaced** | checkbox | `r_interlace` (default off) |
+| **Dithering** | patterns / bayer / blue noise / diffusion (wraps) | `pd_dither` 0–3 (default 1, bayer) |
+| **Draw distance** | slider over 256, 384, 512, 768, 1024, 1536, 2048, 3072, unlimited | `r_maxdist` (default 1024) |
+| **Max framerate** | 30 / 50 / unlimited | `pd_maxfps` (default 0, unlimited) |
+| **Show FPS** | checkbox | `scr_showfps` (default on) |
 
 Removed rows: Customize controls, Go to console, Screen size, Invert mouse, Lookspring, Lookstrafe.
 
 ```c
 // menu.c: new cvars owned by the menu, registered in M_Init
-cvar_t crank_speed = {"crank_speed", "1.4", true};
-cvar_t pd_maxfps   = {"pd_maxfps",   "30",  true};
-cvar_t pd_dither   = {"pd_dither",   "0",   true};
+cvar_t crank_speed = {"crank_speed", "2.6", true};
+cvar_t pd_maxfps   = {"pd_maxfps",   "0",   true};
+cvar_t pd_dither   = {"pd_dither",   "1",   true};
 cvar_t bgmenabled  = {"bgmenabled",  "1",   true};   // read by port/boards/playdate/cd_pd.c
-cvar_t r_lightlevels = {"r_lightlevels", "16", true}; // read by winquake/pdr_light.c
+cvar_t r_lightlevels = {"r_lightlevels", "64", true}; // read by winquake/pdr_light.c
 
 // every change marks the options dirty so Host_SaveOptions writes config.cfg when the menu is left
 void M_AdjustSliders (int dir)
@@ -238,14 +238,10 @@ void M_AdjustSliders (int dir)
 ```
 
 ```c
-// "Reset defaults": default.cfg knows nothing about the port's options, so set them here
-// (default.cfg is the pak's, or the built-in one in defaultcfg.h when the pak has none)
+// "Reset defaults": default.cfg (the pak's, or the built-in one in defaultcfg.h when the pak has
+// none); Cmd_Exec_f runs the port's own defaults (port_default_cfg) right after it
 Cbuf_AddText ("exec default.cfg\n");
-Cvar_SetValue ("d_mipcap", 1);      Cvar_SetValue ("r_lightlevels", 16);
-Cvar_SetValue ("r_interlace", 1);
-Cvar_SetValue ("pd_dither", 0);     Cvar_SetValue ("r_maxdist", 512);
-Cvar_SetValue ("crank_speed", 1.4f); Cvar_SetValue ("pd_maxfps", 30);
-Cvar_SetValue ("scr_showfps", 1);  Cvar_SetValue ("bgmenabled", 1);
+host_options_dirty = true;
 ```
 
 Leaving the menu with Escape calls `Host_SaveOptions()`; with `options_to_game` (opened from the system menu) Escape closes the menu via `M_Menu_Close`.

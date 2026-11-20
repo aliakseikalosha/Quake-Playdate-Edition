@@ -10,7 +10,8 @@
 #      everything is rebuilt and the post-build step that hands out the build number always runs;
 #   2. configures a Release device build (no profiler, no benchmark) and builds it;
 #   3. demo: ships Source/id1/pak0_demo.pak, if there is one, as id1/pak0.pak in the .pdx, without
-#      id1/pak1.pak (the registered episodes), id1/music and without any other game folder (mods, mission packs) in Source/ (-DPD_RELEASE=ON;
+#      id1/pak1.pak (the registered episodes), id1/music and without any other game folder (mods, mission packs) in Source/
+#      except qpe/, cut down to the shareware part of the qpe mod (needs Python 3; -DPD_RELEASE=ON;
 #      every other build leaves pak0_demo.pak out), and checks that it did;
 #      full: ships Source/ as it is (pak0.pak, pak1.pak, music, mods), as a development build does,
 #      and checks that pak0_demo.pak was left out;
@@ -72,6 +73,7 @@ elif [ -f "$DEMO_PAK" ]; then
     && { echo "$PDX/id1 still has the registered game's paks in the shareware release"; exit 1; }
   for d in "$PDX"/*/; do
     [ "$(basename "$d")" = id1 ] && continue
+    [ "$(basename "$d")" = qpe ] && continue    # the qpe mod's shareware part (pdx_pak.cmake)
     ls "$d" 2>/dev/null | grep -qiE '\.pak$|^progs\.dat$|^(maps|progs|gfx|sound)$' \
       && { echo "$d (a mod or mission pack) is still in the shareware release"; exit 1; }
   done

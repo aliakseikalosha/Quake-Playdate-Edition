@@ -20,6 +20,7 @@ The **[Source code index](source-index.md)** lists every file of the repository 
 | Know what each Options menu setting does and costs | [Settings](settings.md) |
 | Use the shareware or the 2021 re-release `pak0.pak`, or find out why the controls or levels misbehave with one | [Game data](port/game-data.md) |
 | Play a mod or a mission pack | [Mods and mission packs](port/mods.md) |
+| Draw the Playdate Edition mod's pictures, or compare any level, model or menu with the original side by side | [Quake: Playdate Edition](port/qpe.md) |
 | See how the engine is wired to the Playdate | [Shared platform layer](port/overview.md), then [Playdate board](port/playdate.md) |
 | Understand how a frame is drawn and shown on the 1-bit screen | [Playdate renderer](engine/renderer-pdr.md), [Playdate board → display.c](port/playdate.md#displayc) |
 | Understand the optimisation work | [Profiling on the device](profiling.md), [Renderer](renderer.md), [Performance infrastructure](engine/perf-infrastructure.md), [Scripts and tools](tools.md) |
@@ -80,8 +81,9 @@ One frame (single player), in `Host_Frame`: read buttons → run console command
 | [Shared platform layer](port/overview.md) | `include/quakembd.h`, `port/sys_port.c`, `vid_port.c`, `in_port.c`, `cd_null.c` (host check only), `fio/fio_posix.c` |
 | [Game data](port/game-data.md) | The shareware and the re-release `pak0.pak`: the built-in `default.cfg`, unused cvars, `MOVETYPE_BOUNCEMISSILE`, the alias setup cache fix |
 | [Mods and mission packs](port/mods.md) | Game folders next to `id1`: the Mods menu, `game.txt`, launch arguments, the mission packs' weapons and autofire, the release build, what was tested |
+| [Quake: Playdate Edition](port/qpe.md) | The `qpe` mod (font, UI pictures and model skins redrawn for the LCD), drawing for the 1-bit screen, `tools/qpe/` (asset pipeline and the side-by-side viewer) |
 | [Playdate board](port/playdate.md) | `main.c`, `display.c`, `bluenoise.h`, `fio.c`, `pd_stdio.c`, `pd_compat.h`, `pd_port.h`, `keyqueue.*`, `autofire.*`, `weapons.*`, `snd.c`, `cd_pd.c`, `pdprof.c`, `.gitignore` |
-| [Scripts and tools](tools.md) | `scripts/*` (release and demo builds, install, bench, report, launcher assets, blue noise, the source index generator) and `tools/hostcheck/*` |
+| [Scripts and tools](tools.md) | `scripts/*` (release and demo builds, install, bench, report, launcher assets, blue noise, the source index generator) `tools/hostcheck/*` and a pointer to `tools/qpe/*` |
 
 ### The engine (`winquake/`)
 
@@ -104,7 +106,8 @@ One frame (single player), in `Host_Frame`: read buttons → run console command
 ### Not documented
 
 - **Removed boards:** the upstream desktop, RISC-V and STM32 boards, their `lib/minifb` submodule and the files only they used were removed from the tree (see [Removed boards](build-system.md#removed-boards)); they are in the git history.
-- Generated or local directories: `build-*/`, `bench-results/`, `tools/hostcheck/out/` (all git-ignored).
+- Generated or local directories: `build-*/`, `bench-results/`, `tools/hostcheck/out/`, `tools/qpe/out/` (all git-ignored).
+- `mods/qpe/art/` and `mods/qpe/orig/`: the mod's pictures, derived from the game data, git-ignored ([Quake: Playdate Edition](port/qpe.md#where-things-are)).
 - `port/boards/playdate/Source/id1/pak0.pak`: the game data, not part of the source tree (what the engine needs from it: [Game data](port/game-data.md)).
 
 ## Which renderer is built?

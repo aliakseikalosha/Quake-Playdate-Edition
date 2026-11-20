@@ -76,6 +76,9 @@ Open the repository folder in VS Code and run the builds from **Terminal > Run T
 | **Playdate: clean build (device)** | Deletes `build-dev/` and every `Source/pdex.*` (which `pdc` would otherwise bundle into the `.pdx`), then builds the device build from scratch. | `build-dev/quake_DEVICE.pdx` |
 | **Playdate: demo build (device)** | `scripts/release-device.sh demo`: the shareware release, see above. | `build-release/Quake-<version>-demo.pdx`, `.zip` |
 | **Playdate: release build (device)** | `scripts/release-device.sh full`: the full release, see above. | `build-release-full/Quake-<version>-full.pdx`, `.zip` |
+| **Playdate: clean all builds** | Deletes every build tree (`build/`, `build-*/`, including earlier releases' `.pdx` and `.zip`) and every `Source/pdex.*`. The game data in `Source/` is untouched. | |
+| **Playdate: clean all, release full and demo** | Runs **Playdate: clean all builds**, **Playdate: release build (device)** and **Playdate: demo build (device)** one after the other; a failure stops the rest. Each release gets its own new build number. | `build-release-full/Quake-<version>-full.pdx`, `.zip`; `build-release/Quake-<version>-demo.pdx`, `.zip` |
+| **qpe: build patch** | `tools/qpe/qpe.py patch`: rebuilds the [qpe mod](port/qpe.md#the-shareware-part-and-the-patch) from `mods/qpe/art/`, then makes the patch that recreates it from anyone's Quake paks (needs `Source/id1`'s paks and Python 3). | `Source/qpe/`, `mods/qpe/qpe.qpatch` |
 | **Install on device (USB)** | Runs **Playdate: clean build (device)**, then `scripts/install-device.sh` copies the `.pdx` to a Playdate on USB and starts it (macOS only). | |
 
 Compiler errors and warnings from the build tasks show up in the **Problems** panel.

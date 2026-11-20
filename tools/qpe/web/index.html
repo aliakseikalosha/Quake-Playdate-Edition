@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>QPE viewer: Quake vs Quake: Playdate Edition</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&display=swap">
+<style>
+:root { --bg:#16171a; --panel:#1f2125; --line:#33363c; --fg:#e6e6e6; --dim:#9a9ca3; --acc:#e0b04a; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:13px/1.4 -apple-system, system-ui, sans-serif; height:100vh;
+       display:grid; grid-template-columns:270px 1fr; grid-template-rows:auto 1fr; }
+header { grid-column:1/3; display:flex; flex-wrap:wrap; gap:14px; align-items:center; padding:8px 12px;
+         background:var(--panel); border-bottom:1px solid var(--line); }
+header h1 { font-size:14px; margin:0 8px 0 0; color:var(--acc); }
+label { color:var(--dim); white-space:nowrap; }
+select, input[type=text], input[type=number], button { background:#2a2c31; color:var(--fg); border:1px solid var(--line);
+         border-radius:4px; padding:3px 6px; font:inherit; }
+button { cursor:pointer; } button:hover { border-color:var(--acc); }
+aside { border-right:1px solid var(--line); display:flex; flex-direction:column; min-height:0; }
+.tabs { display:flex; } .tabs button { flex:1; border-radius:0; border:0; border-bottom:2px solid transparent; padding:8px; }
+.tabs button.on { border-bottom-color:var(--acc); color:var(--acc); }
+#search { margin:8px; }
+#list { overflow:auto; flex:1; padding-bottom:20px; }
+#list .grp { color:var(--dim); font-size:11px; text-transform:uppercase; padding:8px 10px 2px; }
+#list .it { padding:3px 10px 3px 18px; cursor:pointer; display:flex; justify-content:space-between; gap:6px; }
+#list .it:hover { background:#272a30; } #list .it.on { background:#3a3220; color:var(--acc); }
+#list .it .tag { color:var(--dim); font-size:11px; }
+#list .it .dot { color:#7fd17f; }
+#list .it.sel { background:#263447; } #list .it.on.sel { background:#3a3220; }
+#tex .selbar { flex-basis:100%; display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:12px; color:var(--dim); }
+#tex .selbar b { color:var(--fg); } #tex .selbar button { cursor:pointer; }
+.texcard .path label { cursor:pointer; } .texcard .path input { vertical-align:-2px; margin:0 4px 0 0; }
+.texcard.ticked { border-color:#4a6a96; }
+main { overflow:auto; padding:12px; min-width:0; }
+#panes { display:flex; flex-wrap:wrap; gap:12px; }
+.pane { display:flex; flex-direction:column; gap:4px; }
+.pane select { align-self:flex-start; }
+canvas { image-rendering:pixelated; image-rendering:crisp-edges; background:#000; display:block; cursor:grab; outline:none; }
+canvas:focus { box-shadow:0 0 0 2px var(--acc); }
+#controls { margin-top:12px; display:flex; flex-wrap:wrap; gap:10px 18px; align-items:center; padding:10px;
+            background:var(--panel); border:1px solid var(--line); border-radius:6px; }
+#controls .row { display:flex; gap:6px; align-items:center; }
+#controls .hint { color:var(--dim); flex-basis:100%; font-size:12px; }
+#tex { margin-top:12px; display:flex; flex-wrap:wrap; gap:14px; }
+.texcard { background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:8px; }
+.texcard .path { color:var(--dim); font-size:11px; margin-bottom:6px; font-family:ui-monospace, monospace; }
+.texcard .imgs { display:flex; gap:8px; align-items:flex-start; }
+.texcard figure { margin:0; } .texcard figcaption { color:var(--dim); font-size:11px; }
+.texcard img { image-rendering:pixelated; background:repeating-conic-gradient(#333 0 25%, #222 0 50%) 0 0/12px 12px; }
+.texcard .btns { margin-top:6px; display:flex; gap:6px; }
+.texcard .maps { color:var(--dim); font-size:11px; margin-top:6px; max-width:560px; }
+.texcard .maps a { color:var(--fg); cursor:pointer; margin-right:6px; } .texcard .maps a.on { color:var(--acc); }
+#tex .texhead { flex-basis:100%; color:var(--dim); font-size:12px; }
+.texcard.anim { border-color:#5a4a2a; }
+#status { margin-top:10px; color:var(--dim); font-size:12px; white-space:pre-wrap; font-family:ui-monospace, monospace; }
+#status .err { color:#ff7b7b; }
+#toast { position:fixed; right:14px; bottom:14px; background:#2d3a2d; border:1px solid #4d6b4d; padding:8px 12px;
+         border-radius:6px; opacity:0; transition:opacity .3s; pointer-events:none; max-width:60vw; }
+#toast.show { opacity:1; }
+/* ---- the Mote editor: the look of mote.oh4.co */
+body.mote-open > aside, body.mote-open > main { display:none; }
+#mote { grid-row:2; grid-column:1/3; display:grid; grid-template-columns:280px 1fr; min-height:0; background:#0c0c0c;
+        color:#d8d8d8; font:12px/1.4 "SF Mono", "Cascadia Mono", Consolas, monospace; }
+#mote[hidden] { display:none; }
+#mote-side { background:#141414; border-right:1px solid #2a2a2a; overflow:auto; padding:12px 12px 30px; }
+#mote h2 { font:32px/1 UnifrakturMaguntia, "Old English Text MT", serif; letter-spacing:1px; margin:0 0 6px; font-weight:normal; }
+#mote .tagline { color:#666; font-size:10px; letter-spacing:2px; text-transform:uppercase; margin-bottom:6px; }
+#mote .pic { color:#999; font-size:11px; word-break:break-all; margin-bottom:12px; }
+#mote .button-row { display:flex; gap:6px; margin-bottom:6px; }
+#mote button { flex:1; background:#1e1e1e; border:1px solid #2a2a2a; border-radius:0; color:#d8d8d8; padding:7px 6px;
+               font:11px "SF Mono", "Cascadia Mono", Consolas, monospace; letter-spacing:.5px; text-transform:uppercase; }
+#mote button:hover { border-color:#555; } #mote button:disabled { color:#555; }
+#mote hr { border:0; border-top:2px solid #2a2a2a; margin:8px 0 4px; }
+#mote details { border-bottom:1px solid #1e1e1e; padding:6px 0; }
+#mote summary { color:#666; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; padding:2px 4px;
+                list-style:none; }
+#mote summary::before { content:"▸"; display:inline-block; width:10px; } #mote details[open] > summary::before { content:"▾"; }
+#mote details[open] > summary { color:#d8d8d8; }
+#mote .ctl { margin:8px 0 2px; } #mote .ctl .top { display:flex; justify-content:space-between; color:#666; font-size:11px; }
+#mote .ctl .top b { color:#d8d8d8; font-weight:normal; }
+#mote .ctl label { color:#666; font-size:11px; }
+#mote input[type=range] { -webkit-appearance:none; appearance:none; width:100%; height:2px; background:#2a2a2a; margin:10px 0 6px; }
+#mote input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:11px; height:11px; background:#d8d8d8; border:0; }
+#mote input[type=range]::-moz-range-thumb { width:11px; height:11px; background:#d8d8d8; border:0; border-radius:0; }
+#mote select { width:100%; background:#0a0a0a; border:1px solid #2a2a2a; border-radius:0; color:#d8d8d8; padding:5px 6px;
+               font:11px "SF Mono", "Cascadia Mono", Consolas, monospace; margin-top:4px; }
+#mote input[type=checkbox] { accent-color:#d8d8d8; }
+#mote input[type=color] { background:#0a0a0a; border:1px solid #2a2a2a; width:40px; height:22px; padding:0; }
+#mote .hint { color:#666; font-size:10px; margin:6px 0; }
+#mote-main { position:relative; display:grid; grid-template-rows:1fr 6px 1fr; min-height:0; min-width:0; }
+#mote-main > div { overflow:auto; display:flex; flex-wrap:wrap; align-items:center; align-content:safe center;
+                   justify-content:safe center; gap:16px 28px; padding:12px; min-height:0; position:relative; }
+#mote-div { border-top:1px solid #444; border-bottom:1px solid #444; cursor:row-resize; }
+#mote figure { margin:0; display:flex; flex-direction:column; gap:6px; align-items:center; }
+#mote figcaption { color:#666; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; }
+#mote canvas { background:repeating-conic-gradient(#222 0 25%, #1a1a1a 0 50%) 0 0/12px 12px; cursor:default; }
+#mote canvas[data-view] { background:#000; cursor:grab; }
+#mote .drop { position:absolute; inset:0; border:2px dashed #666; display:none; align-items:center; justify-content:center;
+              color:#999; letter-spacing:2px; text-transform:uppercase; background:rgba(12,12,12,.8); pointer-events:none; }
+#mote.dragover .drop { display:flex; }
+#mote-batch { position:fixed; inset:0; background:rgba(0,0,0,.65); display:flex; align-items:center; justify-content:center; z-index:20; }
+#mote-batch[hidden] { display:none; }
+#mote-batch .panel { background:#141414; border:1px solid #2a2a2a; width:min(760px, 92vw); max-height:88vh; display:flex; flex-direction:column;
+  padding:14px; gap:8px; color:#d8d8d8; font-size:12px; }
+#mote-batch h3 { margin:0; font-weight:normal; font-size:15px; }
+#mote-batch .row { display:flex; gap:6px; align-items:center; }
+#mote-batch .row button, #mote-batch .row select, #mote-batch .row input { background:#0a0a0a; border:1px solid #2a2a2a; color:#d8d8d8; padding:5px 8px; }
+#mote-batch .row button { flex:0 0 auto; cursor:pointer; } #mote-batch .row input[type=text] { flex:1; }
+#mote-batch .row .grow { flex:1; }
+#mote-batch #mb-list { overflow:auto; flex:1; min-height:200px; border:1px solid #2a2a2a; padding:4px 8px; }
+#mote-batch .g { color:#888; text-transform:uppercase; font-size:10px; letter-spacing:1.5px; margin:10px 0 2px; }
+#mote-batch .items { display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:0 10px; }
+#mote-batch .items label { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-family:ui-monospace, monospace; font-size:11px; }
+#mote-batch .mark { color:#7fd17f; } #mote-batch .rec { color:#d1b77f; }
+.swatch { width:18px; height:18px; border:1px solid var(--line); border-radius:3px; display:inline-block; vertical-align:middle; }
+</style>
+</head>
+<body>
+<header>
+  <h1>QPE viewer</h1>
+  <label>Dithering <select id="s_dither"><option value="0">patterns</option><option value="1">bayer</option>
+    <option value="2">blue noise</option><option value="3">diffusion</option></select></label>
+  <label>Light levels <select id="s_lightlevels"><option>4</option><option>8</option><option>16</option><option selected>64</option></select></label>
+  <label>Texture detail <select id="s_mipcap"><option value="0">high</option><option value="1" selected>low</option><option value="2">lowest</option></select></label>
+  <label>Draw distance <select id="s_maxdist"><option value="0">unlimited</option><option>256</option><option>512</option><option selected>1024</option></select></label>
+  <label><input type="checkbox" id="s_animate"> Animate</label>
+  <label>Zoom <select id="zoom"><option>1</option><option selected>2</option><option>3</option></select></label>
+  <label>LCD <select id="lcdtint"><option value="bw">black / white</option><option value="pd">Playdate tint</option></select></label>
+  <label>Layout <select id="layout"><option value="2">2 panes</option><option value="4">all 4</option></select></label>
+</header>
+<aside>
+  <div class="tabs"><button data-mode="level">Levels</button><button data-mode="texture">Textures</button><button data-mode="model">Models</button><button data-mode="ui">UI</button></div>
+  <input id="search" type="text" placeholder="filter…">
+  <div id="list"></div>
+</aside>
+<main>
+  <div id="panes"></div>
+  <div id="controls"></div>
+  <div id="tex"></div>
+  <div id="status"></div>
+</main>
+<div id="mote" hidden>
+  <aside id="mote-side"></aside>
+  <section id="mote-main">
+    <div id="mote-top"><figure><canvas id="mote-out"></canvas><figcaption id="mote-outcap">result</figcaption></figure></div>
+    <div id="mote-div" title="drag to resize"></div>
+    <div id="mote-bot"><figure><canvas id="mote-src"></canvas><figcaption id="mote-srccap">source</figcaption></figure>
+      <figure><select id="mote-gamesel"></select><canvas id="mote-game" data-view="qpe-lcd"></canvas><figcaption>in game (after saving)</figcaption></figure></div>
+    <div class="drop">drop an image</div>
+  </section>
+  <input type="file" id="mote-file" accept="image/*" hidden>
+  <div id="mote-batch" hidden></div>
+</div>
+<div id="toast"></div>
+<script>
+"use strict";
+const W = 400, H = 240, FRAME = 768 + W * H + 50 * H;
+const VIEWS = { "orig-color": "Original · full colour", "orig-lcd": "Original · Playdate LCD",
+                "qpe-color": "QPE · full colour", "qpe-lcd": "QPE · Playdate LCD" };
+const $ = (id) => document.getElementById(id);
+
+const defaults = {
+  mode: "level",
+  settings: { dither: 1, lightlevels: 64, mipcap: 1, maxdist: 1024, animate: false },   // the game's defaults (defaultcfg.h)
+  level: { map: "start", cam: null, hud: true, gun: true },
+  model: { name: "progs/ogre.mdl", frame: 0, skin: 0, yaw: 30, pitch: 0, dist: 120, height: 0, light: 128,
+           worldlight: false, backdrop: "void", bg: 0, weapon: false, solo: false, play: false },
+  ui: { item: "menu_main", bg: 0, map: "" },
+  tex: { path: null, model: null },
+  view: { panes: ["orig-color", "qpe-lcd"], zoom: 2, tint: "bw", layout: "2" },
+  // list items selected besides the shown one (Cmd/Ctrl/Shift-click), and the ticked pictures (Mote edits them together)
+  sel: { list: [], anchor: null, paths: [] },
+  mote: {},
+};
+let st = JSON.parse(JSON.stringify(defaults));
+try { const s = JSON.parse(localStorage.getItem("qpe-viewer") || "null");
+      if (s) for (const k in defaults) st[k] = Object.assign({}, defaults[k], s[k] || {}); if (s) st.mode = s.mode || "level"; } catch (e) {}
+const save = () => localStorage.setItem("qpe-viewer", JSON.stringify(st));
+
+let assets = null, last = null, generation = -1, artSet = new Set();
+// the Textures tab shows its texture in a level (the Levels tab's camera) or, for an item box's, as that model
+const view = () => st.mode === "texture" ? (st.tex.model ? "model" : "level") : st.mode;
+
+// ---------------------------------------------------------------- panes
+function buildPanes() {
+  const box = $("panes"); box.innerHTML = "";
+  const list = st.view.layout === "4" ? Object.keys(VIEWS) : st.view.panes;
+  list.forEach((v, i) => {
+    const d = document.createElement("div"); d.className = "pane";
+    const sel = document.createElement("select");
+    for (const k in VIEWS) sel.add(new Option(VIEWS[k], k, false, k === v));
+    if (st.view.layout === "4") sel.disabled = true;
+    sel.onchange = () => { st.view.panes[i] = sel.value; save(); buildPanes(); draw(); };
+    const c = document.createElement("canvas"); c.width = W; c.height = H; c.tabIndex = 0;
+    c.style.width = W * st.view.zoom + "px"; c.style.height = H * st.view.zoom + "px";
+    c.dataset.view = v; hookCanvas(c);
+    d.append(sel, c); box.append(d);
+  });
+}
+
+function draw() {
+  if (!last) return;
+  const tint = st.view.tint === "pd" ? [[0x31,0x2f,0x28],[0xb1,0xae,0xa7]] : [[0,0,0],[255,255,255]];
+  for (const c of document.querySelectorAll("#panes canvas, #mote-game")) {
+    const [src, kind] = c.dataset.view.split("-");
+    const f = last.frames[src === "orig" ? 0 : 1];
+    const ctx = c.getContext("2d"), img = ctx.createImageData(W, H), d = img.data;
+    if (kind === "color") {
+      for (let i = 0; i < W * H; i++) { const p = f[768 + i] * 3; d[i*4] = f[p]; d[i*4+1] = f[p+1]; d[i*4+2] = f[p+2]; d[i*4+3] = 255; }
+    } else {
+      const o = 768 + W * H;
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const b = (f[o + y * 50 + (x >> 3)] >> (7 - (x & 7))) & 1, t = tint[b], i = (y * W + x) * 4;
+        d[i] = t[0]; d[i+1] = t[1]; d[i+2] = t[2]; d[i+3] = 255;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+}
+
+// ---------------------------------------------------------------- render loop
+let busy = false, dirty = false;
+function request() { dirty = true; pump(); }
+async function pump() {
+  if (busy || !dirty) return;
+  busy = true; dirty = false;
+  const body = { mode: view(), settings: st.settings, level: st.level, ui: st.ui,
+                 model: Object.assign({}, st.model, { light: st.model.backdrop === "map" && st.model.worldlight ? null : st.model.light }) };
+  if (st.mode === "texture" && st.tex.model)
+    Object.assign(body.model, { name: st.tex.model, frame: 0, skin: 0, backdrop: "void", weapon: false, light: st.model.light, height: 0,
+                                dist: st.tex.dist || 70 });
+  const t0 = performance.now();
+  try {
+    const r = await fetch("/api/render", { method: "POST", body: JSON.stringify(body) });
+    const buf = await r.arrayBuffer();
+    if (!r.ok) { setStatus(JSON.parse(new TextDecoder().decode(buf)).error, true); }
+    else {
+      const dv = new DataView(buf), hl = dv.getUint32(0, true);
+      const head = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 4, hl)));
+      const base = 4 + hl;
+      last = { head, frames: [new Uint8Array(buf, base, FRAME), new Uint8Array(buf, base + FRAME, FRAME)] };
+      if (head.spawn && head.map === st.level.map && !st.level.cam) {
+        st.level.cam = head.spawn.origin.concat(head.spawn.angles.slice(0, 2)); save(); camReadout();
+      }
+      draw();
+      setStatus(`${head.map} · ${(performance.now() - t0).toFixed(0)} ms` +
+        (head.log.qpe.length ? "\nqpe engine: " + head.log.qpe.slice(-2).join(" | ") : ""));
+    }
+  } catch (e) { setStatus(String(e), true); }
+  busy = false;
+  if (dirty) pump();
+}
+function setStatus(t, err) { $("status").innerHTML = ""; const s = document.createElement("span"); if (err) s.className = "err"; s.textContent = t; $("status").append(s); }
+function toast(t) { const e = $("toast"); e.textContent = t; e.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove("show"), 3500); }
+
+// animation: the engine's clock runs, and a playing model steps through its frames
+setInterval(() => {
+  if (st.mode === "model" && st.model.play) {
+    const m = curModel(); if (m) { st.model.frame = (st.model.frame + 1) % m.frames.length; modelFrameReadout(); request(); }
+  } else if (st.settings.animate) request();
+}, 100);
+
+// ---------------------------------------------------------------- input on the pictures
+const keys = new Set();
+let drag = null;
+window.addEventListener("mouseup", () => drag = null);
+window.addEventListener("mousemove", (e) => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag = { x: e.clientX, y: e.clientY };
+    if (view() === "level" && st.level.cam) {
+      st.level.cam[4] -= dx * 0.4; st.level.cam[3] = Math.max(-89, Math.min(89, st.level.cam[3] + dy * 0.4)); camReadout();
+    } else if (view() === "model") {
+      st.model.yaw = (st.model.yaw + dx * 0.8) % 360; st.model.pitch = Math.max(-90, Math.min(90, st.model.pitch + dy * 0.5));
+    } else return;
+    save(); request();
+});
+function hookCanvas(c) {
+  c.onmousedown = (e) => { drag = { x: e.clientX, y: e.clientY }; c.focus(); e.preventDefault(); };
+  c.onwheel = (e) => {
+    if (view() !== "model") return;
+    const o = st.mode === "texture" ? st.tex : st.model;
+    e.preventDefault(); o.dist = Math.max(8, Math.min(2000, (o.dist || 70) * (e.deltaY > 0 ? 1.1 : 1 / 1.1)));
+    save(); request();
+  };
+  c.onkeydown = (e) => { keys.add(e.key.toLowerCase()); if (e.key.startsWith("Arrow") || e.key === " ") e.preventDefault(); };
+  c.onkeyup = (e) => keys.delete(e.key.toLowerCase());
+  c.onblur = () => keys.clear();
+}
+let lastMove = performance.now();
+function moveLoop(t) {
+  const dt = Math.min(0.1, (t - lastMove) / 1000); lastMove = t;
+  if (view() === "level" && st.level.cam && keys.size) {
+    const c = st.level.cam, sp = (keys.has("shift") ? 900 : 300) * dt;
+    const y = c[4] * Math.PI / 180, p = c[3] * Math.PI / 180;
+    const fw = [Math.cos(y) * Math.cos(p), Math.sin(y) * Math.cos(p), -Math.sin(p)], rt = [Math.sin(y), -Math.cos(y), 0];
+    let m = [0, 0, 0];
+    const add = (v, s) => { m = m.map((a, i) => a + v[i] * s); };
+    if (keys.has("w") || keys.has("arrowup")) add(fw, 1);
+    if (keys.has("s") || keys.has("arrowdown")) add(fw, -1);
+    if (keys.has("d")) add(rt, 1);
+    if (keys.has("a")) add(rt, -1);
+    if (keys.has("e") || keys.has(" ")) add([0, 0, 1], 1);
+    if (keys.has("q") || keys.has("c")) add([0, 0, 1], -1);
+    if (keys.has("arrowleft")) c[4] += 90 * dt;
+    if (keys.has("arrowright")) c[4] -= 90 * dt;
+    for (let i = 0; i < 3; i++) c[i] += m[i] * sp;
+    camReadout(); save(); request();
+  }
+  requestAnimationFrame(moveLoop);
+}
+requestAnimationFrame(moveLoop);
+
+// ---------------------------------------------------------------- the list
+function curModel() { return assets && assets.models.find((m) => m.name === st.model.name); }
+function modelGroup(m) {
+  const n = m.name.replace(/^.*\//, "");
+  if (m.kind === "bsp") return "Item boxes (brush models)";
+  if (m.kind === "spr") return "Sprites";
+  if (n.startsWith("v_")) return "Weapons in hand";
+  if (n.startsWith("g_") || /^(armor|backpack|invisibl|invulner|quaddama|suit|end\d|[bmw]_[gs]_key)/.test(n)) return "Pickups";
+  if (n.startsWith("h_") || n.startsWith("gib") || n === "zom_gib.mdl") return "Heads and gibs";
+  if (/^(bolt|grenade|k_spike|laser|lavaball|missile|s_spike|spike|w_spike|teleport|flame|flame2|eyes|s_light)/.test(n)) return "Effects and projectiles";
+  return "Monsters and players";
+}
+function buildList() {
+  const box = $("list"); box.innerHTML = "";
+  if (!assets) return;
+  const q = $("search").value.toLowerCase();
+  let items = [];
+  if (st.mode === "level") items = assets.maps.map((m) => ({ id: m, label: m, group: /^dm/.test(m) ? "Deathmatch" : /^e\d/.test(m) ? "Episode " + m[1] : "Other", on: m === st.level.map }));
+  if (st.mode === "model") items = assets.models.map((m) => ({ id: m.name, label: m.name.replace(/^(progs|maps)\//, ""), group: modelGroup(m),
+      tag: m.kind, art: m.skins.flat().some((p) => artSet.has(p)), on: m.name === st.model.name }));
+  if (st.mode === "texture") items = assets.textures.filter((t) => !t.anim || t.anim[0] === t.path).map((t) => {
+      const lv = t.maps.filter((m) => !m.startsWith("b_")), fr = t.anim || [t.path];
+      // an animated texture is one entry for all its frames
+      return { id: t.path, label: t.anim ? "+" + t.path.slice(11, -4) + " (animated)" : t.path.replace(/^textures\/|\.png$/g, ""),
+               tag: (t.anim ? t.anim.length + " frames · " : "") + t.size.join("×"), art: fr.some((p) => artSet.has(p)), on: fr.includes(st.tex.path),
+               group: lv.length ? (lv.includes(st.level.map) ? `In this level (${st.level.map})` : "First in " + lv[0]) : "Item boxes" };
+    });
+  if (st.mode === "ui") items = assets.ui.map((u) => ({ id: u.id, label: u.label.replace(/^gfx\.wad: /, ""), group: u.group,
+      tag: u.size ? u.size.join("×") : "", art: u.group !== "Screens" && u.art.some((p) => artSet.has(p)), on: u.id === st.ui.item }));
+  items = items.filter((i) => !q || i.label.toLowerCase().includes(q));
+  const groups = [...new Set(items.map((i) => i.group))];
+  if (st.mode === "model") groups.sort();
+  if (st.mode === "texture") groups.sort((a, b) => (b.startsWith("In this") - a.startsWith("In this")) || (a === "Item boxes") - (b === "Item boxes"));
+  const shown = [];   // in the order shown, for Shift-click
+  for (const g of groups) {
+    const h = document.createElement("div"); h.className = "grp"; h.textContent = g; box.append(h);
+    for (const i of items.filter((x) => x.group === g)) {
+      shown.push(i);
+      const d = document.createElement("div"); d.className = "it" + (i.on ? " on" : "") + (st.sel.list.includes(i.id) ? " sel" : "");
+      d.innerHTML = `<span>${i.art ? '<span class="dot" title="replaced by qpe">●</span> ' : ""}${i.label}</span><span class="tag">${i.tag || ""}</span>`;
+      d.onclick = (e) => listClick(i.id, e, shown);
+      box.append(d);
+    }
+  }
+  if (st.mode !== "level") box.title = "Cmd/Ctrl-click or Shift-click to show several and tick their pictures";
+  const on = box.querySelector(".on"); if (on && !buildList.scrolled) { on.scrollIntoView({ block: "center" }); buildList.scrolled = true; }
+}
+// the pictures of a list item: all its skins, frames, pics
+function itemPics(mode, id) {
+  if (!assets) return [];
+  if (mode === "model") { const m = assets.models.find((x) => x.name === id); return m ? m.skins.flat() : []; }
+  if (mode === "ui") { const u = assets.ui.find((x) => x.id === id); return u ? u.art : []; }
+  if (mode === "texture") { const t = assets.textures.find((x) => x.path === id); return t ? t.anim || [t.path] : []; }
+  return [];
+}
+// a plain click shows one item; Cmd/Ctrl-click adds or removes one, Shift-click a range (the Levels tab: always one)
+function listClick(id, e, items) {
+  const multi = st.mode !== "level" && (e.metaKey || e.ctrlKey || e.shiftKey);
+  if (!multi) { st.sel.list = []; st.sel.paths = []; st.sel.anchor = id; return pick(id); }
+  const ids = items.map((x) => x.id), on = (items.find((x) => x.on) || {}).id, was = new Set(st.sel.list);
+  if (e.shiftKey) {
+    const a = ids.indexOf(st.sel.anchor), b = ids.indexOf(id), a0 = a < 0 ? ids.indexOf(on) : a;
+    st.sel.list = (a0 < 0 ? [id] : ids.slice(Math.min(a0, b), Math.max(a0, b) + 1)).filter((x) => x !== on);
+  } else {
+    if (id === on) return;
+    st.sel.list = was.has(id) ? st.sel.list.filter((x) => x !== id) : st.sel.list.concat([id]);
+    st.sel.anchor = id;
+  }
+  // the ticked pictures follow: an item's are ticked when it is selected (and the shown item's with the first)
+  const now = new Set(st.sel.list), paths = new Set(st.sel.paths);
+  if (!was.size && now.size && on) itemPics(st.mode, on).forEach((p) => paths.add(p));
+  for (const x of was) if (!now.has(x)) itemPics(st.mode, x).forEach((p) => paths.delete(p));
+  for (const x of now) if (!was.has(x)) itemPics(st.mode, x).forEach((p) => paths.add(p));
+  st.sel.paths = [...paths];
+  save(); buildList(); buildTex();
+}
+function pick(id) {
+  if (st.mode === "level") { if (st.level.map !== id) { st.level.map = id; st.level.cam = null; } }
+  if (st.mode === "model") {
+    st.model.name = id; st.model.frame = 0; st.model.skin = 0;
+    const m = curModel();
+    if (m) { const r = Math.max(...m.mins.map(Math.abs), ...m.maxs.map(Math.abs)); st.model.dist = Math.max(30, r * 1.8); st.model.height = 0;
+             st.model.weapon = m.weapon && st.model.weapon; }
+  }
+  if (st.mode === "ui") st.ui.item = id;
+  if (st.mode === "texture") { st.tex.path = id; return texGo(); }
+  save(); buildList(); buildControls(); buildTex(); request();
+}
+// aim the camera at the largest face with the texture (in map, or the current level if it has it)
+async function texGo(map) {
+  const t = curTex(); if (!t) return;
+  const v = await (await fetch(`/api/texview?path=${encodeURIComponent(t.path)}&map=${map || st.level.map}`)).json();
+  st.tex.model = v.model || null;
+  if (v.map) { st.level.map = v.map; st.level.cam = v.cam; }
+  if (v.model) { st.model.yaw = 30; st.model.pitch = 20; }
+  save(); buildList(); buildControls(); buildTex(); request();
+}
+function curTex() { return assets && assets.textures.find((t) => t.path === st.tex.path); }
+
+// ---------------------------------------------------------------- controls
+function ctl(html) { const d = document.createElement("div"); d.className = "row"; d.innerHTML = html; $("controls").append(d); return d; }
+function bgPicker(obj) {
+  const pal = assets ? assets.palette : null;
+  const d = ctl(`<label>Background</label><input type="range" min="0" max="255" value="${obj.bg}"><span class="swatch"></span><span class="v"></span>
+    <button data-v="0">black</button><button data-v="3">grey</button><button data-v="15">white</button>`);
+  const r = d.querySelector("input"), sw = d.querySelector(".swatch"), v = d.querySelector(".v");
+  const show = () => { v.textContent = r.value; if (pal) sw.style.background = `rgb(${pal[r.value*3]},${pal[r.value*3+1]},${pal[r.value*3+2]})`; };
+  r.oninput = () => { obj.bg = +r.value; show(); save(); request(); };
+  d.querySelectorAll("button").forEach((b) => b.onclick = () => { r.value = b.dataset.v; r.oninput(); });
+  show();
+}
+function camReadout() { const e = $("camro"); if (e && st.level.cam) e.textContent = st.level.cam.map((v) => v.toFixed(0)).join(" "); }
+function modelFrameReadout() {
+  const m = curModel(), r = $("fr"), n = $("frn");
+  if (r) r.value = st.model.frame; if (n && m) n.textContent = `${st.model.frame} ${m.frames[st.model.frame] || ""}`;
+}
+function buildControls() {
+  const c = $("controls"); c.innerHTML = "";
+  if (st.mode === "level") {
+    const d = ctl(`<label><input type="checkbox" id="c_hud"> Status bar</label><label><input type="checkbox" id="c_gun"> Weapon</label>
+      <button id="c_spawn">Back to the start</button><label>Camera <span id="camro"></span></label>`);
+    $("c_hud").checked = st.level.hud; $("c_gun").checked = st.level.gun;
+    $("c_hud").onchange = (e) => { st.level.hud = e.target.checked; save(); request(); };
+    $("c_gun").onchange = (e) => { st.level.gun = e.target.checked; save(); request(); };
+    $("c_spawn").onclick = () => { st.level.cam = null; save(); request(); };
+    ctl(`<span class="hint">Click a picture, then W A S D to move, Q / E down / up, arrows to turn, Shift for speed; drag to look around.</span>`);
+    camReadout();
+  }
+  if (st.mode === "texture") {
+    const t = curTex(); if (!t) { ctl(`<span class="hint">Pick a texture: the panes show it where a map uses it.</span>`); return; }
+    if (st.tex.model) ctl(`<span class="hint">${t.name} is only on ${st.tex.model}: drag to turn it.</span>`);
+    else {
+      const lv = t.maps.filter((m) => !m.startsWith("b_"));
+      const d = ctl(`<label>In</label><select id="t_map">${lv.map((m) => `<option>${m}</option>`).join("")}</select>
+        <button id="t_go">Look again</button><label><input type="checkbox" id="c_hud"> Status bar</label><label><input type="checkbox" id="c_gun"> Weapon</label>
+        <label>Camera <span id="camro"></span></label>`);
+      $("t_map").value = st.level.map; $("t_map").onchange = (e) => texGo(e.target.value);
+      $("t_go").onclick = () => texGo(st.level.map);
+      $("c_hud").checked = st.level.hud; $("c_gun").checked = st.level.gun;
+      $("c_hud").onchange = (e) => { st.level.hud = e.target.checked; save(); request(); };
+      $("c_gun").onchange = (e) => { st.level.gun = e.target.checked; save(); request(); };
+      ctl(`<span class="hint">The camera looks at the largest face with this texture. W A S D / Q E / arrows / drag to move from there (the Levels tab follows).</span>`);
+      camReadout();
+    }
+  }
+  if (st.mode === "model") {
+    const m = curModel(); if (!m) return;
+    const skins = m.skins.length;
+    ctl(`<label>Skin</label><select id="m_skin">${m.skins.map((_, i) => `<option value="${i}">${i}</option>`).join("") || "<option>–</option>"}</select>`);
+    $("m_skin").value = st.model.skin; $("m_skin").disabled = skins < 2;
+    $("m_skin").onchange = (e) => { st.model.skin = +e.target.value; save(); buildTex(); request(); };
+    ctl(`<label>Frame</label><input id="fr" type="range" min="0" max="${m.frames.length - 1}" value="${st.model.frame}" style="width:220px">
+         <span id="frn" style="min-width:110px"></span><label><input type="checkbox" id="m_play"> Play</label>`);
+    $("fr").oninput = (e) => { st.model.frame = +e.target.value; modelFrameReadout(); save(); request(); };
+    $("m_play").checked = st.model.play; $("m_play").onchange = (e) => { st.model.play = e.target.checked; save(); };
+    modelFrameReadout();
+    const b = ctl(`<label>Backdrop</label><select id="m_bd"><option value="void">plain colour</option><option value="map">in the level (Levels tab camera)</option></select>
+      ${m.weapon ? '<label><input type="checkbox" id="m_weap"> In hand (first person)</label>' : ""}`);
+    $("m_bd").value = st.model.backdrop; $("m_bd").onchange = (e) => { st.model.backdrop = e.target.value; save(); buildControls(); request(); };
+    if (m.weapon) { $("m_weap").checked = st.model.weapon; $("m_weap").onchange = (e) => { st.model.weapon = e.target.checked; save(); request(); }; }
+    const l = ctl(`<label>Light</label><input id="m_light" type="range" min="0" max="255" value="${st.model.light}"><span id="m_lv">${st.model.light}</span>
+      ${st.model.backdrop === "map" ? '<label><input type="checkbox" id="m_wl"> the level\'s light</label><label><input type="checkbox" id="m_solo"> hide everything else</label>' : ""}`);
+    $("m_light").oninput = (e) => { st.model.light = +e.target.value; $("m_lv").textContent = e.target.value; save(); request(); };
+    if (st.model.backdrop === "map") {
+      $("m_wl").checked = st.model.worldlight; $("m_wl").onchange = (e) => { st.model.worldlight = e.target.checked; save(); request(); };
+      $("m_solo").checked = st.model.solo; $("m_solo").onchange = (e) => { st.model.solo = e.target.checked; save(); request(); };
+    }
+    ctl(`<label>Height</label><input id="m_h" type="range" min="-100" max="100" value="${st.model.height}">
+         <button id="m_reset">Reset view</button>`);
+    $("m_h").oninput = (e) => { st.model.height = +e.target.value; save(); request(); };
+    $("m_reset").onclick = () => { st.model.yaw = 30; st.model.pitch = 0; pick(st.model.name); };
+    if (st.model.backdrop === "void") bgPicker(st.model);
+    ctl(`<span class="hint">Drag to turn the model, mouse wheel for distance.</span>`);
+  }
+  if (st.mode === "ui") {
+    const u = assets && assets.ui.find((x) => x.id === st.ui.item);
+    if (st.ui.item.startsWith("pic:") || st.ui.item === "chars" || st.ui.item === "text") bgPicker(st.ui);
+    else {
+      const d = ctl(`<label>Level behind it</label><select id="u_map"><option value="">the Levels tab's</option>${assets.maps.map((m) => `<option>${m}</option>`).join("")}</select>`);
+      $("u_map").value = st.ui.map; $("u_map").onchange = (e) => { st.ui.map = e.target.value; save(); request(); };
+    }
+  }
+}
+
+// ---------------------------------------------------------------- textures of the current item
+function texPaths() {
+  if (!assets) return [];
+  if (st.mode === "model") { const m = curModel(); return m && m.skins[st.model.skin] ? m.skins[st.model.skin] : []; }
+  if (st.mode === "ui") { const u = assets.ui.find((x) => x.id === st.ui.item); return u ? u.art : []; }
+  if (st.mode === "texture") { const t = curTex(); return t ? t.anim || [t.path] : []; }
+  if (st.mode === "level") return assets.textures.filter((t) => t.maps.includes(st.level.map)).map((t) => t.path);
+  return [];
+}
+function buildTex() {
+  const box = $("tex"); box.innerHTML = "";
+  // the shown item's pictures, then those of the other selected list items
+  const paths = [...new Set(texPaths().concat(st.mode === "level" ? [] : st.sel.list.flatMap((id) => itemPics(st.mode, id))))];
+  if (st.mode === "level") box.innerHTML = `<div class="texhead">The ${paths.length} textures of ${st.level.map}.
+    The game draws a smaller copy (mip level) of each further away, and at Texture detail: low (the Playdate's default)
+    everywhere: build makes those from your picture.</div>`;
+  const animShown = new Set(), stamp = Date.now();
+  if (paths.length > 1 || st.sel.paths.length) box.append(selBar(paths));
+  for (const p of paths) {
+    const at = assets.textures.find((t) => t.path === p);
+    if (at && at.anim && !animShown.has(at.anim[0])) { animShown.add(at.anim[0]); box.append(animCard(at.anim, stamp)); }
+    const has = artSet.has(p), card = document.createElement("div"); card.className = "texcard";
+    const sc = (img) => { img.onload = () => { const z = img.naturalWidth > 200 ? 1 : 2; img.style.width = img.naturalWidth * z + "px"; }; };
+    card.innerHTML = `<div class="path"><label title="tick to edit it in Mote with the other ticked pictures"><input type="checkbox" class="tick" data-ps='${JSON.stringify([p])}'>mods/qpe/art/${p}</label></div><div class="imgs">
+      <figure><img data-src="orig"><figcaption>original</figcaption></figure>
+      <figure>${has ? '<img data-src="art">' : '<div style="color:var(--dim);padding:20px">no qpe art: the original is used</div>'}<figcaption>qpe</figcaption></figure></div>
+      <div class="btns"><button class="edit">${has ? "Open in editor" : "Start editing (copy the original)"}</button>${has ? '<button class="rev">Use the original</button>' : ""}</div>`;
+    card.querySelector(".btns").insertAdjacentHTML("afterbegin", '<button class="mote">Edit in Mote</button>');
+    card.querySelector(".mote").onclick = () => { st.mote.group = null; moteOpen(p); };
+    card.querySelectorAll("img").forEach((img) => { sc(img); img.loading = "lazy"; img.src = `/api/png?src=${img.dataset.src}&path=${encodeURIComponent(p)}&g=${generation}&t=${Date.now()}`; });
+    const tx = assets.textures.find((t) => t.path === p);
+    if (tx && st.mode === "level") {
+      card.querySelector(".btns").insertAdjacentHTML("beforeend", '<button class="show">Show</button>');
+      card.querySelector(".show").onclick = () => { st.mode = "texture"; st.tex.path = p; save(); tabs(); texGo(st.level.map); };
+    }
+    if (tx && st.mode === "texture") {
+      const m = document.createElement("div"); m.className = "maps";
+      m.innerHTML = `${tx.name}, ${tx.size.join("×")}, in ${tx.maps.length} map${tx.maps.length > 1 ? "s" : ""}: ` +
+        tx.maps.map((x) => x.startsWith("b_") ? `<span>${x}</span>` : `<a data-m="${x}" class="${x === st.level.map && !st.tex.model ? "on" : ""}">${x}</a>`).join(" ");
+      m.querySelectorAll("a").forEach((a) => a.onclick = () => texGo(a.dataset.m));
+      card.append(m);
+    }
+    card.querySelector(".edit").onclick = async () => {
+      const r = await (await fetch("/api/edit", { method: "POST", body: JSON.stringify({ path: p }) })).json();
+      toast(r.error ? r.error : "opened " + r.file + ": save it to reload");
+    };
+    const rev = card.querySelector(".rev");
+    if (rev) rev.onclick = async () => {
+      if (!confirm(`Delete mods/qpe/art/${p}? The original picture will be used.`)) return;
+      await fetch("/api/revert", { method: "POST", body: JSON.stringify({ path: p }) });
+    };
+    box.append(card);
+  }
+  box.querySelectorAll("input.tick").forEach((e) => e.onchange = () => {
+    const ps = JSON.parse(e.dataset.ps), t = new Set(st.sel.paths);
+    ps.forEach((p) => e.checked ? t.add(p) : t.delete(p));
+    st.sel.paths = [...t]; save(); syncTicks();
+  });
+  syncTicks();
+}
+// the ticked pictures, in the order the cards show them, then the ones not shown here
+function tickedPaths(shown) {
+  const t = new Set(st.sel.paths);
+  return shown.filter((p) => t.has(p)).concat(st.sel.paths.filter((p) => !shown.includes(p)));
+}
+function syncTicks() {
+  const t = new Set(st.sel.paths);
+  $("tex").querySelectorAll("input.tick").forEach((e) => {
+    e.checked = JSON.parse(e.dataset.ps).every((p) => t.has(p));
+    e.closest(".texcard").classList.toggle("ticked", e.checked);
+  });
+  const bar = $("tex").querySelector(".selbar");
+  if (bar) {
+    const shown = JSON.parse(bar.dataset.paths), n = st.sel.paths.length, out = st.sel.paths.filter((p) => !shown.includes(p)).length;
+    bar.querySelector("b").textContent = `${n} picture${n === 1 ? "" : "s"} ticked`;
+    bar.querySelector(".out").textContent = out ? `(${out} not shown here)` : "";
+    bar.querySelector(".go").disabled = !n;
+  }
+}
+function selBar(paths) {
+  const bar = document.createElement("div"); bar.className = "selbar"; bar.dataset.paths = JSON.stringify(paths);
+  bar.innerHTML = `<b></b><span class="out"></span><button class="go">Edit the ticked in Mote</button>
+    <button class="all">Tick all ${paths.length} shown</button><button class="none">Untick all</button>
+    <span>${st.mode === "level" ? "" : "Cmd/Ctrl- or Shift-click in the list to show several items."}</span>`;
+  bar.querySelector(".all").onclick = () => { st.sel.paths = [...new Set(st.sel.paths.concat(paths))]; save(); syncTicks(); };
+  bar.querySelector(".none").onclick = () => { st.sel.paths = []; save(); syncTicks(); };
+  bar.querySelector(".go").onclick = () => moteOpenGroup(tickedPaths(paths));
+  return bar;
+}
+
+// an animated texture: its frames cycling as in the game (10 a second, R_TextureAnimation), original and qpe; the
+// alternate frames (+a..., a switch's other state) as a second animation
+const isAlt = (p) => /^textures\/\+[a-j]/i.test(p);
+function animCard(frames, stamp) {
+  const seqs = [frames.filter((p) => !isAlt(p)), frames.filter(isAlt)].filter((q) => q.length);
+  const url = (p, src) => `/api/png?src=${src}&path=${encodeURIComponent(p)}&g=${generation}&t=${stamp}`;
+  const card = document.createElement("div"); card.className = "texcard anim";
+  card.innerHTML = `<div class="path"><label title="tick all its frames"><input type="checkbox" class="tick" data-ps='${JSON.stringify(frames)}'>${frames[0].slice(9, -4)}</label>: animated, ${seqs[0].length} frames${seqs[1] ? ` and ${seqs[1].length} alternate (a switch's other state)` : ""}</div>
+    <div class="imgs">${["orig", "qpe"].map((s) => seqs.map((q, k) => `<figure><img class="animimg" data-frames='${JSON.stringify(
+      q.map((p) => url(p, s === "qpe" && artSet.has(p) ? "art" : "orig")))}'><figcaption>${s === "orig" ? "original" : "qpe"}${k ? " · alternate" : ""}</figcaption></figure>`).join("")).join("")}</div>
+    <div class="btns"><button class="mote">Edit all frames in Mote</button></div>`;
+  card.querySelectorAll("img").forEach((img) => {
+    img.onload = () => { const z = img.naturalWidth > 200 ? 1 : 2; img.style.width = img.naturalWidth * z + "px"; };
+    img.src = JSON.parse(img.dataset.frames)[0];
+  });
+  card.querySelector(".mote").onclick = () => { st.mote.group = null; st.mote.frames = true; moteOpen(frames[0]); };
+  return card;
+}
+let animTick = 0;
+setInterval(() => {
+  animTick++;
+  for (const img of document.querySelectorAll("img.animimg")) { const f = JSON.parse(img.dataset.frames); img.src = f[animTick % f.length]; }
+  if (st.mote.path && st.mote.play && mote.results && mote.results.length > 1) moteDraw();
+}, 100);
+
+// ---------------------------------------------------------------- settings, tabs, events
+function bindSettings() {
+  for (const k of ["dither", "lightlevels", "mipcap", "maxdist"]) {
+    const e = $("s_" + k); e.value = st.settings[k];
+    e.onchange = () => { st.settings[k] = +e.value; save(); request(); };
+  }
+  $("s_animate").checked = st.settings.animate;
+  $("s_animate").onchange = (e) => { st.settings.animate = e.target.checked; save(); request(); };
+  $("zoom").value = st.view.zoom; $("zoom").onchange = (e) => { st.view.zoom = +e.target.value; save(); buildPanes(); draw(); };
+  $("lcdtint").value = st.view.tint; $("lcdtint").onchange = (e) => { st.view.tint = e.target.value; save(); draw(); };
+  $("layout").value = st.view.layout; $("layout").onchange = (e) => { st.view.layout = e.target.value; save(); buildPanes(); draw(); };
+  document.querySelectorAll(".tabs button").forEach((b) => b.onclick = () => { if (st.mode !== b.dataset.mode) st.sel.list = []; st.mode = b.dataset.mode; save(); tabs(); });
+  $("search").oninput = buildList;
+}
+function tabs() {
+  document.querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("on", b.dataset.mode === st.mode));
+  buildList.scrolled = false; buildList(); buildControls(); buildTex(); request();
+}
+async function loadAssets() {
+  assets = await (await fetch("/api/assets")).json();
+  artSet = new Set(assets.art);
+}
+function events() {
+  const es = new EventSource("/api/events");
+  es.onmessage = async (m) => {
+    const d = JSON.parse(m.data);
+    toast(d.message);
+    await loadAssets(); buildList(); buildTex();
+    if (d.generation !== generation) { generation = d.generation; request(); }
+  };
+}
+
+// ---------------------------------------------------------------- the Mote editor (tools/qpe/mote, moteart.py)
+// Mote (oh4_halftone.h, the library of mote.oh4.co) makes the picture 1-bit, or 4 levels (black, dark grey, light
+// grey, white); the server gives every pixel a palette colour the LCD draws as exactly that level, in the pixel's
+// own colour, and "Save to qpe" writes it to mods/qpe/art (the viewer then reloads it like any other edit) and
+// records the settings with the picture (mods/qpe/art/mote.json): opening the picture again loads them.
+// An animated texture (or skin group) is converted and saved frame by frame with one set of settings.
+const MOTE_DEFAULTS = { gray: 4, wr: 0.299, wg: 0.587, wb: 0.114, lift: 0, gain: 1, contrast: 1, gamma: 1, threshold: 128,
+  invert: 0, sharpen: 0, radius: 1, edge: 0, edge_strength: 0.5, ordered: 0, bayer: 2, ordered_scale: 0,
+  diffusion: 0, diffusion_strength: 1, serpentine: 1, levels: 4, dark: 64, light: 192 };
+const MOTE_VIEW = { source: "orig", alpha: true, colours: "quake", zoom: 2, preset: "lcd3d", fg: "#000000", bg: "#ffffff",
+  live: false, split: 0.5, closed: [], frames: true, play: false };
+st.mote = Object.assign({ path: null, params: Object.assign({}, MOTE_DEFAULTS) }, MOTE_VIEW, st.mote || {});
+st.mote.params = Object.assign({}, MOTE_DEFAULTS, st.mote.params);
+const PRESETS = { bw: ["#000000", "#ffffff"], pd: ["#312f28", "#b1aea7"], amber: ["#1a0f00", "#ffb000"],
+  green: ["#001a05", "#33ff66"] };
+const BAYER4 = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];     // display.c's
+// display.c's 3D view: the view is drawn at half resolution and each Quake pixel becomes a 2x2 LCD block, one of 5 patterns
+// by its LCD luminance (0..4 white pixels), the variant picked by the colour's palette row; bit 1 = left pixel, bit 0 = right
+const VAR_N = [1, 4, 4, 4, 1];
+const VAR_TOP = [[0], [2, 1, 0, 0], [2, 1, 2, 0], [1, 2, 3, 3], [3]], VAR_BOT = [[0], [0, 0, 2, 1], [1, 2, 2, 3], [3, 3, 1, 2], [3]];
+let lcdLum = null;      // palette index -> the luminance display.c dithers with (its BLACK_POINT 4, WHITE_POINT 120, GAMMA 0.8)
+function paletteLcdLum() {
+  if (lcdLum) return lcdLum;
+  const p = assets.palette; lcdLum = new Uint8Array(256);
+  for (let i = 0; i < 256; i++) {
+    const l = (77 * p[i * 3] + 151 * p[i * 3 + 1] + 28 * p[i * 3 + 2]) >> 8, v = Math.min(1, Math.max(0, (l - 4) / 116));
+    lcdLum[i] = Math.floor(255 * Math.pow(v, 0.8) + 0.5);
+  }
+  return lcdLum;
+}
+let mote = { last: null, results: null, image: null, arts: {}, srcImgs: {}, rec: null, busy: false, dirty: false, saveTimer: 0 };
+
+// the pictures edited together: the ticked selection it was opened with, the frames of the picture's animation (an
+// animated map texture, a model's skin group), else just the picture
+function moteFrames(path = st.mote.path) {
+  if (st.mote.group && st.mote.group.includes(path)) return st.mote.group;
+  if (!assets || !path) return [path];
+  const t = assets.textures.find((x) => x.path === path);
+  if (t) return t.anim || [path];
+  for (const m of assets.models) for (const g of m.skins) if (g.length > 1 && g.includes(path)) return g;
+  return [path];
+}
+// the pictures Mote converts and saves now
+function moteMulti() { const f = moteFrames(); return st.mote.frames && f.length > 1 ? f : [st.mote.path]; }
+const frameName = (p) => p.replace(/^.*\//, "").replace(/\.png$/, "");
+const picName = (p) => p.replace(/^(progs|textures|gfx|gfx\.wad)\//, "").replace(/\.png$/, "");
+// several ticked pictures: Mote edits them as it does an animation's frames
+function moteOpenGroup(paths) {
+  if (!paths.length) return;
+  st.mote.group = paths.length > 1 ? paths : null; st.mote.frames = true;
+  moteOpen(paths[0]);
+}
+
+function moteSections() {
+  const p = st.mote.params, frames = moteFrames();
+  const opt = (list) => list.map((t, i) => [i, t]);
+  return [
+    ["Source", [
+      ["select", "source", "Picture", [["orig", "Quake original"], ["art", "qpe art (current)"], ["image", "Opened image"]], "view"],
+      ["hint", "Open Image or drop a picture to start from it: it is scaled to the picture's size."]]],
+    ["Levels", [["select", "levels", "Colours", [[2, "2: black, white (1-bit)"], [4, "4: black, dark grey, light grey, white"]]]]
+      .concat(p.levels === 4 ? [
+        ["select", "dark", "Dark grey", [[64, "25% white (64)"], [85, "33% white (85)"], [128, "50% white (128)"]]],
+        ["select", "light", "Light grey", [[128, "50% white (128)"], [170, "67% white (170)"], [192, "75% white (192)"]]],
+        ["hint", "The Playdate draws a grey as a dither pattern. 25%, 50% and 75% make the same even pattern in every Dithering setting; 33% and 67% differ a little between them."]] : [])],
+    ...(frames.length > 1 ? [[st.mote.group ? "Pictures" : "Animation", st.mote.group ? [
+      ["check", "frames", `All ${frames.length} ticked pictures: ${frames.slice(0, 16).map(picName).join(" ")}${frames.length > 16 ? " …" : ""}`, "view"],
+      ["check", "play", "Play (one after another, 10 a second)", "view"],
+      ["hint", "With all pictures, each is shown and Save converts and saves each with these settings. Click one in the result to make it the edited picture (Open Image goes to it)."]] : [
+      ["check", "frames", `All ${frames.length} frames: ${frames.map(frameName).join(" ")}`, "view"],
+      ["check", "play", "Play (10 frames a second, as the game)", "view"],
+      ["hint", "With all frames, every frame is shown and Save converts and saves each with these settings."]]]] : []),
+    ["Adjustments", [
+      ["range", "lift", "Lift", -1, 1, 0.01], ["range", "gain", "Gain", 0, 4, 0.01], ["range", "contrast", "Contrast", 0, 3, 0.01],
+      ["range", "gamma", "Gamma", 0.1, 5, 0.01], ["range", "threshold", "Threshold", 0, 255, 1], ["check", "invert", "Invert"]]],
+    ["Pre-processing", [["range", "sharpen", "Sharpen", -1, 3, 0.01], ["range", "radius", "Radius", 1, 10, 1]]],
+    ["Grayscale", [["select", "gray", "Mode", opt(["Luminance (BT.601)", "Luminance (BT.709)", "Average", "Custom", "Playdate LCD (display.c)"])]]
+      .concat(p.gray === 3 ? [["range", "wr", "Red", 0, 1, 0.001], ["range", "wg", "Green", 0, 1, 0.001], ["range", "wb", "Blue", 0, 1, 0.001]] : [])],
+    ["Edge Detection", [["select", "edge", "Mode", opt(["None", "Sobel", "Scharr", "Laplacian"])]]
+      .concat(p.edge ? [["range", "edge_strength", "Strength", 0, 2, 0.01]] : [])],
+    ["Threshold Bias", [["select", "ordered", "Type", opt(["None", "Bayer", "Blue Noise", "White Noise", "IGN", "Halftone", "Diagonal", "H-Line", "V-Line"])]]
+      .concat(p.ordered === 1 ? [["select", "bayer", "Size", opt(["2x2", "4x4", "8x8", "16x16", "32x32"])]] : [])
+      .concat(p.ordered ? [["range", "ordered_scale", "Scale", 0, 2, 0.01]] : [])],
+    ["Dithering", [["select", "diffusion", "Algorithm", opt(["None", "Simple", "Box", "Atkinson", "Burkes", "Floyd-Steinberg",
+      "Jarvis-Judice-Ninke", "Pigeon", "Sierra Lite", "Sierra-2", "Stucki"])]]
+      .concat(p.diffusion ? [["range", "diffusion_strength", "Strength", 0, 1, 0.01], ["check", "serpentine", "Serpentine"]] : [])],
+    ["View", [["range", "zoom", "Zoom", 0.1, 8, 0.1, "view"], ["check", "alpha", "Preserve Alpha", "view"]]],
+    ["Output Colors", [["select", "preset", "Preset", [["quake", "Quake colours (as saved)"], ["bw", "Black & White"],
+      ["pd", "Playdate LCD"], ["lcd3d", "Playdate 3D view (each pixel a 2×2 pattern)"], ["lcd", "Playdate LCD dither (greys as 4×4 Bayer)"], ["amber", "Amber"], ["green", "Green Phosphor"], ["custom", "Custom"]], "view"]]
+      .concat(st.mote.preset === "custom" ? [["color", "fg", "Foreground", "view"], ["color", "bg", "Background", "view"]] : [])],
+    ["Save", [["select", "colours", "Colours", [["quake", "Own palette row (Quake colours)"], ["grey", "Grey row"]], "view"],
+      ["check", "live", "Save on every change", "view"],
+      ["hint", "Every pixel becomes a palette colour the Playdate draws as exactly its level. Saving records these settings with the picture."],
+      ["hint", "Quake's fullbright colours (palette 224–255) glow: lighting does not darken them. On skins and map textures a pixel that glows in the original keeps its colour (or the art's own fullbright colour, or the closest fullbright colour to an opened image's pixel) and takes no level; no other pixel becomes fullbright."],
+      ["button", "reset", "Reset settings"]]],
+  ];
+}
+
+function moteRecText() {
+  const r = mote.rec;
+  const src = r && ({ orig: "Quake original", art: "qpe art", image: "an opened image" }[r.source] || r.source);
+  if (r && mote.recShown) return `${picName(st.mote.path)}: last saved ${r.time} from ${src}; the settings shown are the ones in use (they came from ${picName(mote.opened)}).`;
+  return r ? `Last saved ${r.time}; its settings from then are loaded (source: ${src}).`
+           : "No Mote settings saved with this picture yet.";
+}
+function moteSide() {
+  const side = $("mote-side"), path = st.mote.path;
+  side.innerHTML = `<h2>Mote</h2><div class="tagline">${st.mote.params.levels === 4 ? "4-level" : "1-bit"} dithering · qpe</div>
+    <div class="pic">mods/qpe/art/${path}${st.mote.group && st.mote.frames ? ` and ${st.mote.group.length - 1} more ticked` : ""}</div>
+    <div class="button-row"><button id="mote-open">Open Image</button><button id="mote-save">Save to qpe</button></div>
+    <div class="button-row"><button id="mote-copy" title="remember these settings">Copy settings</button><button id="mote-paste" title="use the copied settings here">Paste settings</button></div>
+    <div class="button-row"><button id="mote-many" title="convert and save other pictures with these settings">Apply to pictures…</button></div>
+    <div class="button-row"><button id="mote-close">Back to the viewer</button></div>
+    <div class="hint" id="mote-rec">${moteRecText()}</div><hr>`;
+  for (const [title, ctls] of moteSections()) {
+    const d = document.createElement("details"); d.open = !st.mote.closed.includes(title);
+    d.ontoggle = () => { st.mote.closed = st.mote.closed.filter((t) => t !== title); if (!d.open) st.mote.closed.push(title); save(); };
+    d.innerHTML = `<summary>${title}</summary>`;
+    for (const [type, key, label, ...rest] of ctls) {
+      const isView = rest[rest.length - 1] === "view", obj = isView ? st.mote : st.mote.params;
+      const c = document.createElement("div"); c.className = "ctl";
+      const changed = (rebuild) => {
+        save();
+        if (rebuild) moteSide();
+        if (["zoom", "preset", "fg", "bg", "play"].includes(key)) moteDraw();
+        else if (key !== "live") moteRun();
+      };
+      if (type === "range") {
+        const [min, max, step] = rest, fmt = (v) => key === "zoom" ? (+v).toFixed(1) + "x" : step >= 1 ? String(v) : (+v).toFixed(step < 0.01 ? 3 : 2);
+        c.innerHTML = `<div class="top"><span>${label}</span><b>${fmt(obj[key])}</b></div><input type="range" min="${min}" max="${max}" step="${step}" value="${obj[key]}">`;
+        const r = c.querySelector("input"), b = c.querySelector("b");
+        r.oninput = () => { obj[key] = +r.value; b.textContent = fmt(r.value); changed(false); };
+        r.ondblclick = () => { const d0 = isView ? MOTE_VIEW[key] : MOTE_DEFAULTS[key]; r.value = d0; r.oninput(); };
+      } else if (type === "select") {
+        c.innerHTML = `<label>${label}</label><select>${rest[0].map(([v, t]) => `<option value="${v}">${t}</option>`).join("")}</select>`;
+        const e = c.querySelector("select"); e.value = obj[key];
+        e.onchange = () => {
+          obj[key] = typeof MOTE_DEFAULTS[key] === "number" && !isView ? +e.value : e.value;
+          if (key === "source" && e.value === "image" && !mote.image) { $("mote-file").click(); return; }
+          if (key === "source" && e.value === "art") { moteSnapshotArt().then(() => changed(true)); return; }
+          changed(true);
+        };
+      } else if (type === "check") {
+        c.innerHTML = `<label><input type="checkbox"> ${label}</label>`;
+        const e = c.querySelector("input"); e.checked = !!obj[key];
+        e.onchange = async () => {
+          obj[key] = isView ? e.checked : (e.checked ? 1 : 0);
+          if (key === "frames" && st.mote.source === "art") await moteSnapshotArt();
+          changed(false); if (key === "live" && e.checked) moteSave();
+        };
+      } else if (type === "color") {
+        c.innerHTML = `<div class="top"><span>${label}</span><input type="color" value="${obj[key]}"></div>`;
+        const e = c.querySelector("input"); e.oninput = () => { obj[key] = e.value; changed(false); };
+      } else if (type === "hint") {
+        c.className = "hint"; c.textContent = key;
+      } else if (type === "button") {
+        c.innerHTML = `<button>${label}</button>`;
+        c.querySelector("button").onclick = () => { st.mote.params = Object.assign({}, MOTE_DEFAULTS); save(); moteSide(); moteRun(); };
+      }
+      d.append(c);
+    }
+    side.append(d);
+  }
+  $("mote-open").onclick = () => $("mote-file").click();
+  $("mote-save").onclick = () => moteSave();
+  $("mote-close").onclick = moteClose;
+  $("mote-copy").onclick = () => {
+    localStorage.setItem("qpe-mote-clip", JSON.stringify({ params: st.mote.params, colours: st.mote.colours, alpha: st.mote.alpha }));
+    toast("Mote settings copied: Paste settings on another picture, or Apply to pictures…");
+  };
+  $("mote-paste").onclick = () => {
+    const c = JSON.parse(localStorage.getItem("qpe-mote-clip") || "null");
+    if (!c) return toast("no Mote settings copied yet");
+    st.mote.params = Object.assign({}, MOTE_DEFAULTS, c.params); st.mote.colours = c.colours; st.mote.alpha = c.alpha;
+    save(); moteSide(); moteRun(); toast("pasted the copied Mote settings: Save to qpe to keep the result");
+  };
+  $("mote-many").onclick = moteBatchOpen;
+}
+
+async function moteOpen(path) {
+  if (st.mote.path !== path) mote.image = null;
+  st.mote.path = path;
+  mote.results = null; mote.last = null; mote.rec = null; mote.recShown = false; mote.opened = path;
+  // the settings the picture was last saved with
+  try { mote.rec = (await (await fetch(`/api/mote/settings?path=${encodeURIComponent(path)}`)).json()).settings; } catch (e) {}
+  if (mote.rec) {
+    st.mote.params = Object.assign({}, MOTE_DEFAULTS, mote.rec.params);
+    st.mote.colours = mote.rec.colours; st.mote.alpha = mote.rec.alpha;
+    if (mote.rec.source !== "image") st.mote.source = mote.rec.source;
+  }
+  if (st.mote.source === "image" && !mote.image) st.mote.source = "orig";
+  save();
+  mote.arts = {}; if (st.mote.source === "art") await moteSnapshotArt();
+  document.body.classList.add("mote-open"); $("mote").hidden = false;
+  const gs = $("mote-gamesel"); gs.innerHTML = "";
+  for (const k in VIEWS) gs.add(new Option(VIEWS[k], k, false, k === $("mote-game").dataset.view));
+  gs.onchange = () => { $("mote-game").dataset.view = gs.value; draw(); };
+  moteSide(); moteSplit(); moteRun(); draw();
+  // a map texture: the in-game view looks at it (in the current level when it has the texture)
+  if (path.startsWith("textures/") && (st.mode === "level" || st.mode === "texture")) {
+    if (st.mode === "texture") { st.tex.path = path; texGo(); }
+    else fetch(`/api/texview?path=${encodeURIComponent(path)}&map=${st.level.map}`).then((r) => r.json()).then((v) => {
+      if (v.map === st.level.map && v.cam) { st.level.cam = v.cam; save(); request(); }
+    });
+  }
+}
+function moteClose() {
+  st.mote.path = null; st.mote.group = null; save();
+  $("mote-batch").hidden = true;
+  document.body.classList.remove("mote-open"); $("mote").hidden = true;
+  buildTex();
+}
+function moteSplit() { $("mote-main").style.gridTemplateRows = `${st.mote.split}fr 6px ${1 - st.mote.split}fr`; }
+
+// "qpe art" is read once, when picked: saving then does not feed the result back in as the next source
+async function moteSnapshotArt() {
+  mote.arts = {};
+  for (const p of moteMulti()) {
+    if (!artSet.has(p)) continue;
+    const im = new Image(); im.src = `/api/png?src=art&path=${encodeURIComponent(p)}&t=${Date.now()}`;
+    await im.decode();
+    const c = document.createElement("canvas"); c.width = im.width; c.height = im.height;
+    const x = c.getContext("2d"); x.drawImage(im, 0, 0);
+    mote.arts[p] = moteB64(x.getImageData(0, 0, im.width, im.height).data);
+  }
+}
+function moteB64(data) {
+  let s = ""; for (let i = 0; i < data.length; i += 8192) s += String.fromCharCode.apply(null, data.subarray(i, i + 8192));
+  return btoa(s);
+}
+// the opened image is only the edited picture's; the other frames start from their own art / original
+function moteSourceImage(p = st.mote.path) {
+  return st.mote.source === "image" ? (p === st.mote.path ? mote.image : null) : st.mote.source === "art" ? mote.arts[p] || null : null;
+}
+function moteBody(saveIt, p, more) {
+  const image = moteSourceImage(p);
+  return { path: p, source: image ? "image" : "orig", image: image || undefined, more: !!more,
+           params: st.mote.params, colours: st.mote.colours, alpha: st.mote.alpha, save: !!saveIt,
+           picked: st.mote.source === "image" && p !== st.mote.path ? "orig" : st.mote.source };
+}
+async function moteCall(saveIt, p = st.mote.path, more = false) {
+  const r = await fetch("/api/mote", { method: "POST", body: JSON.stringify(moteBody(saveIt, p, more)) });
+  const buf = await r.arrayBuffer();
+  if (!r.ok) throw new Error(JSON.parse(new TextDecoder().decode(buf)).error);
+  const hl = new DataView(buf).getUint32(0, true), head = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 4, hl)));
+  const n = head.w * head.h, o = 4 + hl;
+  return { path: p, head, bits: new Uint8Array(buf, o, n), opaque: new Uint8Array(buf, o + n, n), pix: new Uint8Array(buf, o + 2 * n, n) };
+}
+async function moteRun() {
+  if (!st.mote.path) return;
+  mote.dirty = true;
+  if (mote.busy) return;
+  mote.busy = true;
+  while (mote.dirty) {
+    mote.dirty = false;
+    const t0 = performance.now(), fr = moteMulti();
+    try {
+      mote.results = await Promise.all(fr.map((p) => moteCall(false, p)));
+      mote.last = mote.results[Math.max(0, fr.indexOf(st.mote.path))];
+      moteDraw();
+      $("mote-outcap").textContent = `result · ${mote.last.head.w}×${mote.last.head.h}${fr.length > 1 ? ` · ${fr.length} ${st.mote.group ? "pictures" : "frames"}` : ""}${(() => { const g = mote.results.reduce((a, L) => a + (L.head.glowing || 0), 0); return g ? ` · ${g} glowing pixels kept` : ""; })()} · ${(performance.now() - t0).toFixed(0)} ms`;
+    } catch (e) { toast("Mote: " + e.message); }
+  }
+  mote.busy = false;
+  if (st.mote.live) { clearTimeout(mote.saveTimer); mote.saveTimer = setTimeout(moteSave, 700); }
+}
+async function moteSave() {
+  try {
+    const fr = moteMulti();
+    // the game rebuilds once, after the last
+    for (let i = 0; i < fr.length; i++) await moteCall(true, fr[i], i < fr.length - 1);
+    toast(`saved ${fr.length > 1 ? `${fr.length} ${st.mote.group ? "pictures" : "frames"}, ` : ""}mods/qpe/art/${st.mote.path}${fr.length > 1 ? " ..." : ""}: the game reloads it in a moment`);
+    mote.rec = (await (await fetch(`/api/mote/settings?path=${encodeURIComponent(st.mote.path)}`)).json()).settings; mote.recShown = false;
+    if ($("mote-rec")) $("mote-rec").textContent = moteRecText();
+  } catch (e) { toast("Mote: " + e.message); }
+}
+
+function moteDraw() {
+  const R = mote.results; if (!R || !R.length) return;
+  const z = st.mote.zoom, pal = assets.palette, gap = 2;
+  const shown = st.mote.play && R.length > 1 ? [R[animTick % R.length]] : R;
+  // side by side, in rows as wide as the pane
+  const avail = Math.max(...shown.map((L) => L.head.w), Math.floor(($("mote-top").clientWidth - 40) / z));
+  const pos = []; let px = 0, py = 0, rowh = 0;
+  for (const L of shown) {
+    if (px && px + L.head.w > avail) { px = 0; py += rowh + gap; rowh = 0; }
+    pos.push([px, py]); px += L.head.w + gap; rowh = Math.max(rowh, L.head.h);
+  }
+  const cw = Math.max(...shown.map((L, k) => pos[k][0] + L.head.w)), ch = py + rowh;
+  mote.layout = { shown, pos };
+  const out = $("mote-out"), ctx = out.getContext("2d");
+  // the 3D view's look: twice the size in LCD pixels, each picture pixel a 2x2 pattern, at the same size on screen as the source
+  const s2 = st.mote.preset === "lcd3d" ? 2 : 1;
+  out.width = cw * s2; out.height = ch * s2; out.style.width = cw * z + "px"; out.style.height = ch * z + "px";
+  const hex = (s) => [1, 3, 5].map((i) => parseInt(s.slice(i, i + 2), 16));
+  const pre = st.mote.preset;
+  const tint = pre === "custom" ? [hex(st.mote.fg), hex(st.mote.bg)] : pre === "lcd" ? PRESETS.bw.map(hex) : PRESETS[pre] ? PRESETS[pre].map(hex) : null;
+  ctx.clearRect(0, 0, out.width, out.height);
+  if (s2 === 2) {
+    const ll = paletteLcdLum(), tc = (st.view.tint === "pd" ? PRESETS.pd : PRESETS.bw).map(hex);
+    shown.forEach((L, k) => {
+      const { w, h } = L.head, img = ctx.createImageData(w * 2, h * 2), d = img.data;
+      for (let i = 0; i < w * h; i++) {
+        if (!L.opaque[i]) continue;
+        const c = L.pix[i], lv = (ll[c] * 4 + 128) >> 8, v = (c >> 4) % VAR_N[lv], x = (i % w) * 2, y = ((i / w) | 0) * 2;
+        const rows = [VAR_TOP[lv][v], VAR_BOT[lv][v]];
+        for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) {
+          const on = (rows[dy] >> (1 - dx)) & 1, k = ((y + dy) * w * 2 + x + dx) * 4;
+          d[k] = tc[on][0]; d[k + 1] = tc[on][1]; d[k + 2] = tc[on][2]; d[k + 3] = 255;
+        }
+      }
+      ctx.putImageData(img, pos[k][0] * 2, pos[k][1] * 2);
+    });
+  }
+  const ll = paletteLcdLum();
+  for (const [k, L] of (s2 === 2 ? [] : shown).entries()) {
+    const { w, h, levels } = L.head, img = ctx.createImageData(w, h), d = img.data;
+    for (let i = 0; i < w * h; i++) {
+      if (!L.opaque[i]) continue;
+      let c;
+      if (!tint) c = [pal[L.pix[i] * 3], pal[L.pix[i] * 3 + 1], pal[L.pix[i] * 3 + 2]];
+      else {
+        // a glowing pixel (opaque 2) is not on a level: its colour's LCD luminance
+        const lum = L.opaque[i] === 2 ? ll[L.pix[i]] : levels[L.bits[i]];
+        let v = lum / 255;
+        // as the LCD draws it outside the 3D view: the grey's 4x4 Bayer pattern
+        if (pre === "lcd") v = lum > BAYER4[((i / w) | 0) & 3][(i % w) & 3] * 16 + 8 ? 1 : 0;
+        c = [0, 1, 2].map((k) => Math.round(tint[0][k] + (tint[1][k] - tint[0][k]) * v));
+      }
+      d[i * 4] = c[0]; d[i * 4 + 1] = c[1]; d[i * 4 + 2] = c[2]; d[i * 4 + 3] = 255;
+    }
+    ctx.putImageData(img, pos[k][0], pos[k][1]);
+  }
+  // the source
+  const src = $("mote-src"), sx = src.getContext("2d");
+  if (src.width !== cw || src.height !== ch) { src.width = cw; src.height = ch; }
+  src.style.width = cw * z + "px"; src.style.height = ch * z + "px";
+  sx.clearRect(0, 0, cw, ch);
+  $("mote-srccap").textContent = { orig: "source · Quake original", art: Object.keys(mote.arts).length ? "source · qpe art (as picked)" : "source · Quake original (no qpe art)", image: "source · opened image" }[st.mote.source];
+  for (const [k, L] of shown.entries()) {
+    const { w, h } = L.head, [x0, y0] = pos[k], si = moteSourceImage(L.path);
+    if (si) {
+      const raw = Uint8ClampedArray.from(atob(si), (ch2) => ch2.charCodeAt(0));
+      sx.putImageData(new ImageData(raw, w, h), x0, y0);
+    } else {
+      let im = mote.srcImgs[L.path];
+      if (!im) { im = mote.srcImgs[L.path] = new Image(); im.src = `/api/png?src=orig&path=${encodeURIComponent(L.path)}`; }
+      if (im.complete && im.naturalWidth) sx.drawImage(im, x0, y0);
+      else im.addEventListener("load", () => { if (mote.results === R) sx.drawImage(im, x0, y0); }, { once: true });
+    }
+  }
+  const g = $("mote-game"); g.width = W; g.height = H; g.style.width = W * Math.min(2, st.view.zoom) + "px"; g.style.height = H * Math.min(2, st.view.zoom) + "px";
+  draw();
+}
+
+// ---------------------------------------------------------------- Mote: the same settings on many pictures
+const PIC_GROUPS = { font: "Font", wad: "UI · gfx.wad", lmp: "UI · gfx/*.lmp", skin: "Model skins", texture: "Map textures" };
+async function moteBatchOpen() {
+  const box = $("mote-batch"); box.hidden = false;
+  const sel = mote.batchSel || (mote.batchSel = new Set(moteMulti()));
+  let recs = {};
+  try { recs = (await (await fetch("/api/mote/settings")).json()).settings || {}; } catch (e) {}
+  const p = st.mote.params;
+  const desc = `${p.levels === 4 ? `4 levels (greys ${Math.round(p.dark / 2.55)}% and ${Math.round(p.light / 2.55)}% white)` : "1-bit"}, ` +
+    `${["no", "Simple", "Box", "Atkinson", "Burkes", "Floyd-Steinberg", "Jarvis-Judice-Ninke", "Pigeon", "Sierra Lite", "Sierra-2", "Stucki"][p.diffusion]} dithering` +
+    `${p.ordered ? ", threshold bias" : ""}, ${st.mote.colours === "grey" ? "grey row" : "Quake colours"}`;
+  box.innerHTML = `<div class="panel"><h3>Apply these Mote settings to pictures</h3>
+    <div class="hint">Each ticked picture is converted with the settings on the left (${desc}) and saved to mods/qpe/art,
+      replacing its qpe art; the settings are recorded with it. The game reloads once all are done.
+      <span class="mark">●</span> has qpe art, <span class="rec">M</span> has saved Mote settings.</div>
+    <div class="row"><input type="text" id="mb-q" placeholder="filter…"><button id="mb-all">Tick shown</button><button id="mb-none">Untick shown</button>
+      <button id="mb-frames">This picture${moteFrames().length > 1 ? "'s frames" : ""}</button></div>
+    <div class="row"><label>Start from</label><select id="mb-src"><option value="art">the qpe art where there is one, else the original</option>
+      <option value="orig">the Quake original</option></select></div>
+    <div id="mb-list"></div>
+    <div class="row"><span id="mb-n" class="grow"></span><span id="mb-prog"></span><button id="mb-go">Apply</button><button id="mb-close">Close</button></div></div>`;
+  $("mb-src").value = st.mote.source === "orig" ? "orig" : "art";
+  const shownPaths = () => [...box.querySelectorAll("#mb-list input[data-p]")].map((e) => e.dataset.p);
+  const count = () => { $("mb-n").textContent = `${sel.size} ticked`; };
+  const list = () => {
+    const q = $("mb-q").value.toLowerCase(), l = $("mb-list"); l.innerHTML = "";
+    for (const kind in PIC_GROUPS) {
+      const ps = assets.pictures.filter((x) => x.kind === kind && (!q || x.path.toLowerCase().includes(q)));
+      if (!ps.length) continue;
+      const g = document.createElement("div"); g.className = "g";
+      g.innerHTML = `<label><input type="checkbox"> ${PIC_GROUPS[kind]} (${ps.length})</label>`;
+      const gc = g.querySelector("input"); gc.checked = ps.every((x) => sel.has(x.path));
+      gc.onchange = () => { for (const x of ps) gc.checked ? sel.add(x.path) : sel.delete(x.path); list(); };
+      const it = document.createElement("div"); it.className = "items";
+      it.innerHTML = ps.map((x) => `<label title="${x.path} · ${x.size.join("×")}"><input type="checkbox" data-p="${x.path}"${sel.has(x.path) ? " checked" : ""}>
+        ${artSet.has(x.path) ? '<span class="mark">●</span>' : ""}${recs[x.path] ? '<span class="rec">M</span>' : ""} ${x.path.replace(/^(textures|gfx|gfx\.wad|progs)\//, "")}</label>`).join("");
+      it.querySelectorAll("input").forEach((e) => e.onchange = () => { e.checked ? sel.add(e.dataset.p) : sel.delete(e.dataset.p); count(); });
+      l.append(g, it);
+    }
+    count();
+  };
+  $("mb-q").oninput = list;
+  $("mb-all").onclick = () => { shownPaths().forEach((x) => sel.add(x)); list(); };
+  $("mb-none").onclick = () => { shownPaths().forEach((x) => sel.delete(x)); list(); };
+  $("mb-frames").onclick = () => { moteFrames().forEach((x) => sel.add(x)); list(); };
+  $("mb-close").onclick = () => { box.hidden = true; };
+  $("mb-go").onclick = async () => {
+    const paths = assets.pictures.map((x) => x.path).filter((x) => sel.has(x));
+    if (!paths.length) return;
+    if (!confirm(`Convert ${paths.length} picture${paths.length > 1 ? "s" : ""} with these settings and save them to mods/qpe/art (replacing their qpe art)?`)) return;
+    $("mb-go").disabled = true;
+    let done = 0; const errors = {};
+    for (let i = 0; i < paths.length; i += 24) {
+      const chunk = paths.slice(i, i + 24);
+      $("mb-prog").textContent = `${done} / ${paths.length} …`;
+      try {
+        const r = await (await fetch("/api/mote/batch", { method: "POST", body: JSON.stringify({
+          paths: chunk, source: $("mb-src").value, params: st.mote.params, colours: st.mote.colours, alpha: st.mote.alpha,
+          more: i + 24 < paths.length }) })).json();
+        if (r.error) throw new Error(r.error);
+        done += r.saved.length; Object.assign(errors, r.errors);
+      } catch (e) { errors[chunk[0]] = e.message; break; }
+    }
+    $("mb-prog").textContent = `${done} / ${paths.length} saved`;
+    $("mb-go").disabled = false;
+    const ne = Object.keys(errors).length;
+    toast(`Mote: saved ${done} picture${done === 1 ? "" : "s"}${ne ? `, ${ne} failed (${Object.entries(errors)[0].join(": ")})` : ""}; the game reloads in a moment`);
+    recs = (await (await fetch("/api/mote/settings")).json()).settings || {};
+    mote.rec = recs[st.mote.path] || null; if ($("mote-rec")) $("mote-rec").textContent = moteRecText();
+    list();
+  };
+  list();
+}
+
+function moteLoadImage(file) {
+  if (!file || !st.mote.path || !mote.last && !assets) return;
+  const url = URL.createObjectURL(file), im = new Image();
+  im.onload = async () => {
+    const info = mote.last ? mote.last.head : (await moteCall(false)).head;
+    const c = document.createElement("canvas"); c.width = info.w; c.height = info.h;
+    const x = c.getContext("2d"); x.imageSmoothingQuality = "high"; x.drawImage(im, 0, 0, info.w, info.h);
+    mote.image = moteB64(x.getImageData(0, 0, info.w, info.h).data); st.mote.source = "image"; save(); URL.revokeObjectURL(url);
+    moteSide(); moteRun();
+    toast(`${file.name}: ${im.width}×${im.height} scaled to ${info.w}×${info.h}`);
+  };
+  im.src = url;
+}
+$("mote-file").onchange = (e) => { moteLoadImage(e.target.files[0]); e.target.value = ""; };
+$("mote-main").ondragover = (e) => { e.preventDefault(); $("mote").classList.add("dragover"); };
+$("mote-main").ondragleave = () => $("mote").classList.remove("dragover");
+$("mote-main").ondrop = (e) => { e.preventDefault(); $("mote").classList.remove("dragover"); moteLoadImage(e.dataTransfer.files[0]); };
+let moteDrag = false;
+$("mote-div").onmousedown = (e) => { moteDrag = true; e.preventDefault(); };
+window.addEventListener("mouseup", () => { if (moteDrag) { moteDrag = false; save(); } });
+window.addEventListener("mousemove", (e) => {
+  if (!moteDrag) return;
+  const r = $("mote-main").getBoundingClientRect();
+  st.mote.split = Math.max(0.15, Math.min(0.85, (e.clientY - r.top) / r.height)); moteSplit();
+});
+window.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape" || !st.mote.path || (e.target.closest && e.target.closest("input, select"))) return;
+  if (!$("mote-batch").hidden) $("mote-batch").hidden = true; else moteClose();
+});
+hookCanvas($("mote-game"));
+// with several pictures, clicking one makes it the edited picture (its saved-settings note, Open Image)
+for (const id of ["mote-out", "mote-src"]) $(id).addEventListener("click", (e) => {
+  const lay = mote.layout; if (!lay || lay.shown.length < 2) return;
+  const r = e.currentTarget.getBoundingClientRect(), z = st.mote.zoom, x = (e.clientX - r.left) / z, y = (e.clientY - r.top) / z;
+  const k = lay.shown.findIndex((L, i) => x >= lay.pos[i][0] && x < lay.pos[i][0] + L.head.w && y >= lay.pos[i][1] && y < lay.pos[i][1] + L.head.h);
+  if (k < 0 || lay.shown[k].path === st.mote.path) return;
+  st.mote.path = lay.shown[k].path; mote.image = null; if (st.mote.source === "image") st.mote.source = "orig";
+  save(); mote.last = lay.shown[k]; mote.recShown = true;
+  fetch(`/api/mote/settings?path=${encodeURIComponent(st.mote.path)}`).then((r2) => r2.json()).then((j) => { mote.rec = j.settings; moteSide(); });
+  moteSide();
+});
+
+(async function init() {
+  bindSettings(); buildPanes();
+  await loadAssets();
+  tabs(); events();
+  if (st.mote.path) moteOpen(st.mote.path);
+})();
+</script>
+</body>
+</html>

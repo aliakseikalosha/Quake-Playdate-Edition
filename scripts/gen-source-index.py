@@ -51,7 +51,7 @@ group('Top level', 'Build entry point, licence and editor configuration.', '', [
     ('CMakeLists.txt', 'build', 'Top-level build: selects the board, sets the global flags, adds {winquake/CMakeLists.txt} and {port/CMakeLists.txt}.', 'build-system.md#top-level-cmakeliststxt'),
     ('README.md', 'doc', 'The project overview: what it is, controls, and links to building and the guides in `docs/`.', '../README.md'),
     ('gpl-2.0.txt', 'licence', 'The GNU GPL v2 text; Quake\'s source is released under it.', None),
-    ('.gitignore', 'config', 'Keeps `build-*/`, `bench-results/` and `tools/hostcheck/out/` out of git.', 'README.md#not-documented'),
+    ('.gitignore', 'config', 'Keeps `build-*/`, `bench-results/`, `tools/hostcheck/out/`, `tools/qpe/out/`, Python caches (`__pycache__/`) and the qpe mod\'s pictures (`mods/*/art/`, `mods/*/orig/`, backups as `mods/*/art-*/`) out of git.', 'README.md#not-documented'),
     ('.vscode/tasks.json', 'editor', 'VS Code tasks: simulator (debug) build, device build, release (full) and demo builds, install over USB.', 'build-system.md#editor-integration'),
     ('.vscode/launch.json', 'editor', 'Launches the Playdate Simulator under CodeLLDB against `build-sim-debug/quake.pdx`.', 'build-system.md#editor-integration'),
 ])
@@ -106,7 +106,7 @@ group('Playdate board: build files and data', 'How the `.pdx` is configured, bui
     ('port/boards/playdate/toolchain.cmake', 'build', 'The Arm GCC cross-compilation toolchain for the device build.', 'build-system.md#toolchaincmake'),
     ('port/boards/playdate/pd_sdk.cmake', 'build', 'Finds the Playdate SDK (`PLAYDATE_SDK_PATH`, or `~/.Playdate/config`) in plain CMake, for every host; used by {platform.cmake} and {toolchain.cmake}.', 'build-system.md#playdate-platformcmake'),
     ('port/boards/playdate/pdx_buildnumber.cmake', 'build', 'Post-build step: gives every build the next build number in the built `pdxinfo`.', 'build-system.md#playdate-board-cmakeliststxt'),
-    ('port/boards/playdate/pdx_pak.cmake', 'build', 'Post-build step: decides which game data the `.pdx` carries. A demo build with a `pak0_demo.pak` ships it as `id1/pak0.pak` and leaves out `pak1.pak`, the music and the mods; every other build drops `pak0_demo.pak`.', 'build-system.md#which-pak0pak-the-pdx-gets'),
+    ('port/boards/playdate/pdx_pak.cmake', 'build', 'Post-build step: decides which game data the `.pdx` carries. A demo build with a `pak0_demo.pak` ships it as `id1/pak0.pak` and leaves out `pak1.pak`, the music and the mods (qpe cut down to its shareware part); every other build drops `pak0_demo.pak`. No build ships a `config.cfg`.', 'build-system.md#which-pak0pak-the-pdx-gets'),
     ('port/boards/playdate/pdx_rename.cmake', 'build', 'Profiling builds only: appends tags such as "profile, demo1" to the launcher title.', 'build-system.md#playdate-board-cmakeliststxt'),
     ('port/boards/playdate/Source/pdxinfo', 'data', 'Game metadata: `name`, `author`, `bundleID`, `version`, `buildNumber`, and where the launcher assets are (`imagePath`, `launchSoundPath`).', 'build-system.md#source'),
     ('port/boards/playdate/Source/launcher/card.png', 'data', 'The launcher card, exported from {card.aseprite}.', 'build-system.md#launcher-art-art'),
@@ -133,7 +133,7 @@ group('Engine core', 'Start-up and the frame loop, memory, strings and files, co
     ('winquake/cvar.c', 'always', 'Console variables: registration, lookup, setting, archiving to `config.cfg`.', 'engine/core.md#cvarh--cvarc'),
     ('winquake/cmd.h', 'header', 'The command buffer, tokenizer and command-table API.', 'engine/core.md#cmdh--cmdc'),
     ('winquake/cmd.c', 'always', 'The command buffer, tokenizer, aliases and command table; falls back to {defaultcfg.h} when the pak has no `default.cfg`.', 'engine/core.md#cmdh--cmdc'),
-    ('winquake/defaultcfg.h', 'header', 'The built-in `default.cfg` (D-pad and button bindings) for paks that lack one, such as the 2021 re-release\'s.', 'engine/core.md#built-in-defaultcfg-defaultcfgh'),
+    ('winquake/defaultcfg.h', 'header', 'The built-in `default.cfg` (D-pad and button bindings) for paks that lack one, such as the 2021 re-release\'s, and the port\'s option defaults run after any `default.cfg`.', 'engine/core.md#built-in-defaultcfg-defaultcfgh'),
     ('winquake/crc.h', 'header', '`CRC_Block` and friends.', 'engine/core.md#crch--crcc'),
     ('winquake/crc.c', 'always', 'The 16-bit CRC, used to check `progs.dat` against the compiled-in variable layout.', 'engine/core.md#crch--crcc'),
     ('winquake/mathlib.h', 'header', 'Vector macros and the math function declarations.', 'engine/core.md#mathlibh--mathlibc'),
@@ -219,7 +219,7 @@ group('Models and map formats', 'The BSP, MDL and SPR file formats and their loa
     ('winquake/modelgen.h', 'header', 'On-disk alias (MDL) structures.', 'engine/models.md#modelgenh'),
     ('winquake/spritegn.h', 'header', 'On-disk sprite (SPR) structures.', 'engine/models.md#spritegnh'),
     ('winquake/model.h', 'header', 'The in-memory structures (`model_t`, `msurface_t`, `mleaf_t`, `mnode_t`, …).', 'engine/models.md#modelh'),
-    ('winquake/model.c', 'always', 'Loads and caches brush, alias and sprite models; point-in-leaf and PVS decompression.', 'engine/models.md#modelc'),
+    ('winquake/model.c', 'always', 'Loads and caches brush, alias and sprite models; point-in-leaf and PVS decompression; map textures replaced from `textures.dat` (qpe).', 'engine/models.md#modelc'),
     ('winquake/anorms.h', 'header', 'The 162 precomputed vertex normals of alias models.', 'engine/models.md#anormsh'),
 ])
 
@@ -315,6 +315,21 @@ group('Host check (`tools/hostcheck/`)', 'Runs the real engine and the real {dis
     ('tools/hostcheck/compare-shots.py', 'tool', 'Measures how many pixels differ between two sets of screenshots and writes side-by-side PNGs.', 'tools.md#toolshostcheckcompare-shotspy'),
 ])
 
+group('Quake: Playdate Edition (`tools/qpe/`)', 'The qpe mod\'s asset pipeline and the side-by-side viewer (the real engine twice: original and `-game qpe`). Page: [Quake: Playdate Edition](port/qpe.md).', 'tools/qpe', [
+    ('tools/qpe/qpe.py', 'tool', 'The command line (`extract`, `auto`, `build`, `serve`, `patch`) and the viewer\'s server: runs two {qpeview.c} engines in step, rebuilds and reloads the mod when a picture is saved, aims the camera at a map texture.', 'port/qpe.md#the-viewer-qpepy-serve'),
+    ('tools/qpe/qpemod.py', 'tool', 'Where the mod\'s art lives, the list of replaceable pictures (map textures too), PNG to palette indices, mip levels, and the build into `Source/qpe/` (`textures.dat`).', 'port/qpe.md#where-things-are'),
+    ('tools/qpe/quakefmt.py', 'tool', 'PAK, WAD2, qpic, MDL skins, SPR and BSP headers, 8-bit PNG reading and writing, the LCD luminance of {display.c}; standard library only.', 'port/qpe.md#how-it-works'),
+    ('tools/qpe/autoart.py', 'tool', 'The automatic first pass of the art: font, pictures, backgrounds, status bar digits and model skins for the 1-bit LCD.', 'port/qpe.md#what-auto-does'),
+    ('tools/qpe/viewer/qpeview.c', 'tool', 'The engine half of the viewer: the engine, the Playdate renderer and {display.c} driven over stdin/stdout, answering with the 8-bit picture and the LCD image.', 'port/qpe.md#how-it-works'),
+    ('tools/qpe/viewer/build.sh', 'tool', 'Builds {qpeview.c} with the Playdate build\'s engine files, renaming `R_RenderView`, `PDR_LightPoint` and `VID_Update` so the viewer can wrap them.', 'port/qpe.md#how-it-works'),
+    ('tools/qpe/web/index.html', 'tool', 'The viewer\'s page: levels, map textures (animated ones playing), models and UI side by side, settings, controls, the pictures of the current item (several with Cmd/Shift-click, tick boxes), and the Mote editor (4 levels, saved settings, ticked pictures edited together, apply to many pictures).', 'port/qpe.md#the-viewer-qpepy-serve'),
+    ('tools/qpe/qpepatch.py', 'tool', 'The qpe mod as a patch with none of id\'s data in it (each file XORed with its original): `make` from a built mod, `apply` to anyone\'s paks (the shareware pak gives the shareware part, used by the demo release). Standard library only.', 'port/qpe.md#the-shareware-part-and-the-patch'),
+    ('mods/qpe/qpe.qpatch', 'data', 'The qpe mod as a patch (`tools/qpe/qpe.py patch`): no id data in it, recreated from anyone\'s paks by `tools/qpe/qpepatch.py`.', 'port/qpe.md#the-shareware-part-and-the-patch'),
+    ('tools/qpe/moteart.py', 'tool', 'The Mote editor\'s server half: runs Mote on a picture and turns its 1-bit or 4-level result into palette colours the LCD draws as exactly that level (pixels that glow in the original keep a fullbright colour); records each picture\'s settings; converts many at once.', 'port/qpe.md#the-mote-editor'),
+    ('tools/qpe/mote/mote.c', 'tool', 'Mote\'s steps (grayscale, adjust, sharpen, edges, ordered bias, error diffusion) as one call, plus a 4-level dither, built into `out/libmote` for {moteart.py}.', 'port/qpe.md#the-mote-editor'),
+    ('tools/qpe/mote/oh4_halftone.h', 'tool', 'Mote, Eric Scrivner\'s single-header 1-bit dithering library (public domain, unchanged), the library of mote.oh4.co.', 'port/qpe.md#the-mote-editor'),
+])
+
 group('Documentation', 'These pages. Start at the [documentation index](README.md).', 'docs', [
     ('docs/README.md', 'doc', 'The documentation index: reading paths, architecture, the page map and conventions.', 'README.md'),
     ('docs/source-index.md', 'doc', 'This file.', None),
@@ -329,6 +344,7 @@ group('Documentation', 'These pages. Start at the [documentation index](README.m
     ('docs/port/playdate.md', 'doc', 'The Playdate board: main loop, display and dithering, files, sound, music, profiler.', 'port/playdate.md'),
     ('docs/port/game-data.md', 'doc', 'The shareware and the 2021 re-release `pak0.pak`: what the engine needs from them.', 'port/game-data.md'),
     ('docs/port/mods.md', 'doc', 'Mods and mission packs: game folders next to `id1`, the Mods menu, what was tested.', 'port/mods.md'),
+    ('docs/port/qpe.md', 'doc', 'Quake: Playdate Edition: the qpe mod, drawing for the 1-bit LCD, the asset pipeline and the side-by-side viewer.', 'port/qpe.md'),
     ('docs/engine/core.md', 'doc', 'Engine core: start-up, memory, strings, files, cvars, commands, math, WADs.', 'engine/core.md'),
     ('docs/engine/platform-interfaces.md', 'doc', 'The video, input, sound and CD audio headers and the legacy x86 headers.', 'engine/platform-interfaces.md'),
     ('docs/engine/client.md', 'doc', 'The client: connection, parsing, input, demos, the camera, keys.', 'engine/client.md'),
@@ -474,6 +490,8 @@ w('│   └── boards/playdate/  the Playdate board: main.c display.c fio.c 
 w('├── winquake/             the engine: Quake, the Playdate renderer (pdr_*), the original renderer (r_*, d_*)')
 w('├── scripts/              release, install, bench, report, blue-noise generator')
 w('├── tools/hostcheck/      host-side picture and behaviour checks')
+w('├── tools/qpe/            the Quake: Playdate Edition mod: asset pipeline and side-by-side viewer')
+w('├── mods/qpe/            the mod\'s pictures (git-ignored)')
 w('├── docs/                 this documentation')
 w('└── note/release/         release notes')
 w('```')
@@ -486,6 +504,7 @@ w('| [`port/boards/playdate/`](../port/boards/playdate/) | [Sources](#playdate-b
 w('| [`winquake/`](../winquake/) | [Engine core](#engine-core), [platform headers](#platform-interface-headers), [client](#client), [UI](#screen-hud-console-and-menus), [server](#server-world-and-physics), [QuakeC](#quakec-virtual-machine), [network](#networking), [models](#models-and-map-formats), [Playdate renderer](#playdate-renderer-pdr_), [original renderer](#original-software-renderer-interfaces-and-set-up), [performance](#performance-infrastructure), [legacy](#legacy-x86-headers) |')
 w('| [`scripts/`](../scripts/) | [Scripts](#scripts-scripts) |')
 w('| [`tools/hostcheck/`](../tools/hostcheck/) | [Host check](#host-check-toolshostcheck) |')
+w('| [`tools/qpe/`](../tools/qpe/) | [Quake: Playdate Edition](#quake-playdate-edition-toolsqpe) |')
 w('| [`docs/`](.), [`note/`](../note/) | [Documentation](#documentation) |')
 w('')
 
@@ -538,7 +557,7 @@ for letter in sorted(az):
 
 w('## What this index does not list')
 w('')
-w('- Generated or local directories, all git-ignored: `build-*/`, `bench-results/`, `tools/hostcheck/out/`, `port/boards/playdate/.build_number`, `port/boards/playdate/Source/pdex.*`.')
+w('- Generated or local directories, all git-ignored: `build-*/`, `bench-results/`, `tools/hostcheck/out/`, `tools/qpe/out/`, `port/boards/playdate/.build_number`, `port/boards/playdate/Source/pdex.*`.\n- `mods/qpe/art/` and `mods/qpe/orig/`: the qpe mod\'s pictures, derived from the game data and git-ignored ([Quake: Playdate Edition](port/qpe.md#where-things-are)).')
 w('- `port/boards/playdate/Source/id1/` (your `pak0.pak`, the optional `pak0_demo.pak` and the music): game data, not part of the source tree. What the engine needs from the pak: [Game data](port/game-data.md).')
 w('- The upstream desktop, RISC-V and STM32 boards and `lib/minifb`, removed from the tree: [Removed boards](build-system.md#removed-boards).')
 w('')

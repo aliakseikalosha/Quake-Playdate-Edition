@@ -232,6 +232,7 @@ char	*va(char *format, ...);
 //============================================================================
 
 extern int com_filesize;
+extern int com_filepos;
 struct cache_user_s;
 
 extern	char	com_gamedir[MAX_OSPATH];

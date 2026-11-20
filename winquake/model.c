@@ -331,6 +331,76 @@ byte	*mod_base;
 
 /*
 =================
+Mod_ReplaceTextures
+
+textures.dat in the game folder (written by tools/qpe/qpemod.py for the qpe mod) holds new pixels, all four
+mip levels, for textures of the maps. An entry replaces the texture of its name and size whose full-size
+pixels have its CRC: maps disagree about a few names (sky4, *water1, ...), and those stay apart.
+
+	"QTEX", int count, count * { char name[16]; int width, height, crc, filepos; }, the pixels
+=================
+*/
+typedef struct
+{
+	char	name[16];
+	int		width, height, crc, filepos;
+} dtexreplace_t;
+
+static void Mod_ReplaceTextures (void)
+{
+	static dtexreplace_t	dir[32];
+	int		h, base, count, done, n, k, j, p, pos, replaced;
+	char	magic[4];
+	texture_t	*tx;
+	byte	*pix;
+	unsigned short	crc;
+
+	if (!loadmodel->numtextures)
+		return;
+	COM_OpenFile ("textures.dat", &h);
+	if (h == -1)
+		return;
+	base = com_filepos;
+	Sys_FileRead (h, magic, 4);
+	Sys_FileRead (h, &count, 4);
+	count = LittleLong (count);
+	if (memcmp (magic, "QTEX", 4))
+		count = 0;
+	replaced = 0;
+	pos = base + 8;
+	for (done = 0 ; done < count ; done += n)
+	{
+		n = count - done < 32 ? count - done : 32;
+		Sys_FileSeek (h, pos);
+		Sys_FileRead (h, dir, n * sizeof(dir[0]));
+		pos += n * sizeof(dir[0]);
+		for (k = 0 ; k < n ; k++)
+		{
+			for (j = 0 ; j < loadmodel->numtextures ; j++)
+			{
+				tx = loadmodel->textures[j];
+				if (!tx || tx->width != LittleLong (dir[k].width) || tx->height != LittleLong (dir[k].height)
+				|| strncmp (tx->name, dir[k].name, 16))
+					continue;
+				pix = (byte *)(tx + 1);
+				CRC_Init (&crc);
+				for (p = 0 ; p < tx->width * tx->height ; p++)
+					CRC_ProcessByte (&crc, pix[p]);
+				if (CRC_Value (crc) != (unsigned short)LittleLong (dir[k].crc))
+					continue;
+				Sys_FileSeek (h, base + LittleLong (dir[k].filepos));
+				Sys_FileRead (h, pix, tx->width * tx->height / 64 * 85);
+				replaced++;
+			}
+		}
+	}
+	COM_CloseFile (h);
+	if (replaced)
+		Con_DPrintf ("%s: %i textures from textures.dat\n", loadmodel->name, replaced);
+}
+
+/*
+=================
 Mod_LoadTextures
 =================
 */
@@ -379,8 +449,14 @@ void Mod_LoadTextures (lump_t *l)
 			tx->offsets[j] = mt->offsets[j] + sizeof(texture_t) - sizeof(miptex_t);
 		// the pixels immediately follow the structures
 		memcpy ( tx+1, mt+1, pixels);
-		
-		if (!Q_strncmp(mt->name,"sky",3))	
+	}
+
+	Mod_ReplaceTextures ();
+
+	for (i=0 ; i<m->nummiptex ; i++)
+	{
+		tx = loadmodel->textures[i];
+		if (tx && !Q_strncmp(tx->name,"sky",3))
 			R_InitSky (tx);
 	}
 

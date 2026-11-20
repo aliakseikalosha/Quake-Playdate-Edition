@@ -6,6 +6,7 @@ Two directories hold the helper programs:
 
 - [`scripts/`](../scripts/): things you run on your computer: around a device build (release build, install, benchmark, report), to generate data (the blue-noise tile) and to generate the [source code index](source-index.md).
 - [`tools/hostcheck/`](../tools/hostcheck/): a harness that runs the real engine and the real Playdate display code *on the host* to prove an optimisation did not change the picture.
+- [`tools/qpe/`](../tools/qpe/): the asset pipeline of the *Quake: Playdate Edition* mod and a viewer that shows the original game and the mod side by side, in colour and as the LCD shows them. Described on its own page: [Quake: Playdate Edition](port/qpe.md).
 
 | File | Purpose |
 | --- | --- |
@@ -21,6 +22,7 @@ Two directories hold the helper programs:
 | [`tools/hostcheck/run.sh`](#toolshostcheckrunsh) | Build and run it |
 | [`tools/hostcheck/golden-compare.py`](#toolshostcheckgolden-comparepy) | Compare two golden hash files |
 | [`tools/hostcheck/compare-shots.py`](#toolshostcheckcompare-shotspy) | Measure how much two renderers' pictures differ |
+| [`tools/qpe/qpe.py`](port/qpe.md#workflow) | The qpe mod: extract the original pictures, make a first pass, build the mod, run the side-by-side viewer |
 
 ---
 
@@ -30,7 +32,7 @@ A clean **Release** build of the game for the device, with a new build number, i
 
 | Kind | VS Code task | Output | Game data in the `.pdx` |
 | --- | --- | --- | --- |
-| `demo` (the default) | **Playdate: demo build (device)** | `build-release/Quake-<version>-demo.pdx` and `.zip` | The shareware: `pak0_demo.pak` as `id1/pak0.pak`, no `pak1.pak` (the registered episodes), no music, no mods. The one to share. |
+| `demo` (the default) | **Playdate: demo build (device)** | `build-release/Quake-<version>-demo.pdx` and `.zip` | The shareware: `pak0_demo.pak` as `id1/pak0.pak`, no `pak1.pak` (the registered episodes), no music, no mods except the shareware part of the qpe mod. The one to share. |
 | `full` | **Playdate: release build (device)** | `build-release-full/Quake-<version>-full.pdx` and `.zip` | `Source/` as it is: `pak0.pak`, `pak1.pak`, music, mods and mission packs. Not redistributable. |
 
 ```shell
@@ -216,7 +218,7 @@ Host-side checks for the Playdate port. It links the real engine (`winquake/*.c`
 | `HMAPS=1` | maps | Loads every shareware map (`start`, `e1m1`–`e1m8`) and turns, walks and fires in each: a crash and limits check. `HMAPS="hip1m1 hip1m2 …"` loads those maps instead (a mod's, with `HARGS="-game …"`). |
 | `HWEAPONS=<map>` | weapons | On that map gives every weapon (`impulse 9`) and picks each one the Weapon system menu lists through `port/boards/playdate/weapons.c` (compiled in), first to last and back, checking the weapon in hand. With `HARGS="-game hipnotic"` etc. it checks the mission packs' impulses against their QuakeC. |
 | `HINTERLACE=1` | modifier | Any mode above with `r_interlace 1`. |
-| `HCMD="…"` | modifier | Console commands before any mode (e.g. `HCMD="pd_dither 2"`). Every mode except `HMENU` first sets `d_mipcap 0`, `r_lightlevels 64`, `r_interlace 0`, `r_maxdist 0` and `scr_showfps 0`, so pictures stay comparable with the original renderer; use `HCMD` to test the defaults instead (e.g. `HCMD="r_lightlevels 16"`). |
+| `HCMD="…"` | modifier | Console commands before any mode (e.g. `HCMD="pd_dither 2"`). Every mode except `HMENU` first sets `d_mipcap 0`, `r_lightlevels 64`, `r_interlace 0`, `r_maxdist 0` and `scr_showfps 0`, so pictures stay comparable with the original renderer, and `pd_dither 0`, `gamma 1`, `cl_forwardspeed`/`cl_backspeed 200`, `crank_speed 1.4` and `pd_maxfps 30`, the defaults before 2026-11-19, so the goldens recorded with them still hold; use `HCMD` to test the defaults instead (e.g. `HCMD="pd_dither 1"`). |
 | `HLOG=1` | modifier | Print engine log lines. |
 | `HARGS="…"` | modifier | Quake's command line for any mode, as the Playdate's launch arguments give it (e.g. `HARGS="-game mymod"`, `-mem 9` for a heap up to 16 MB). |
 

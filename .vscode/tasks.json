@@ -49,9 +49,33 @@
 			"label": "Playdate: demo build (device)",
 			"type": "shell",
 			// Clean Release build of the shareware, build-release/Quake-<version>-demo.pdx and .zip (no profiler): pak0_demo.pak as
-			// id1/pak0.pak, no music, no mods. New build number, written to Source/pdxinfo.
+			// id1/pak0.pak, no music, no mods except the qpe mod's shareware part. New build number, written to Source/pdxinfo.
 			"command": "./scripts/release-device.sh demo",
 			"problemMatcher": ["$gcc"]
+		},
+		{
+			"label": "Playdate: clean all builds",
+			"type": "shell",
+			// Every build tree (build/, build-*/: Simulator, device, release outputs and their .pdx/.zip) and the pdex.*
+			// binaries a build leaves in Source/ (pdc would bundle them). Source/'s game data is untouched.
+			"command": "rm -rf build build-*/ port/boards/playdate/Source/pdex.*",
+			"problemMatcher": []
+		},
+		{
+			"label": "Playdate: clean all, release full and demo",
+			// Clean all builds, then the full release and the shareware demo release, one after the other (each gets a
+			// new build number; a failure stops the rest): build-release-full/ and build-release/.
+			"dependsOn": ["Playdate: clean all builds", "Playdate: release build (device)", "Playdate: demo build (device)"],
+			"dependsOrder": "sequence",
+			"problemMatcher": []
+		},
+		{
+			"label": "qpe: build patch",
+			"type": "shell",
+			// Rebuild the qpe mod from mods/qpe/art (Source/qpe/), then make mods/qpe/qpe.qpatch: the mod without id's
+			// data, which tools/qpe/qpepatch.py applies to anyone's paks (docs/port/qpe.md). Needs Source/id1's paks.
+			"command": "python3 tools/qpe/qpe.py patch",
+			"problemMatcher": []
 		},
 		{
 			"label": "Install on device (USB)",

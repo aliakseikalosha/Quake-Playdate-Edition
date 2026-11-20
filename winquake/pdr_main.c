@@ -32,8 +32,8 @@ int			r_amodels_drawn;
 
 cvar_t	r_clearcolor = {"r_clearcolor","2"};
 cvar_t	r_waterwarp = {"r_waterwarp","1"};
-cvar_t	r_interlace = {"r_interlace","1", true};	// port: "Interlaced" in the options menu
-cvar_t	r_maxdist = {"r_maxdist","512", true};	// port: "Draw distance" in the options menu, 0 = unlimited
+cvar_t	r_interlace = {"r_interlace","0", true};	// port: "Interlaced" in the options menu
+cvar_t	r_maxdist = {"r_maxdist","1024", true};	// port: "Draw distance" in the options menu, 0 = unlimited
 cvar_t	r_fullbright = {"r_fullbright","0"};
 cvar_t	r_drawentities = {"r_drawentities","1"};
 cvar_t	r_drawviewmodel = {"r_drawviewmodel","1"};

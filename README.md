@@ -34,7 +34,7 @@ You run by default; the Options menu's "Always Run" turns that off. While the ti
 
 ## Mods and mission packs
 
-Copy a mod's or mission pack's folder (`hipnotic`, `rogue`, `mymod`, ...) next to `id1` in the game's Data folder, then pick it in Quake's main menu under **Mods**: the game restarts in it and keeps starting there until you pick Quake again. Hold B while the game starts to start plain Quake. Scourge of Armagon and Dissolution of Eternity get their own status bar, New Game episodes and Weapon menu entries. See [Mods and mission packs](docs/port/mods.md).
+Copy a mod's or mission pack's folder (`hipnotic`, `rogue`, `mymod`, ...) next to `id1` in the game's Data folder, then pick it in Quake's main menu under **Mods**: the game restarts in it and keeps starting there until you pick another. The game starts in this port's own mod, Quake: Playdate Edition (its pictures redrawn for the 1-bit screen), until you pick Quake there. Hold B while the game starts to start plain Quake once. Scourge of Armagon and Dissolution of Eternity get their own status bar, New Game episodes and Weapon menu entries. See [Mods and mission packs](docs/port/mods.md).
 
 ## Building
 

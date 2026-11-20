@@ -302,9 +302,13 @@ and works on the built `.pdx` only; `Source/id1/` is never touched:
 
 | Build | `pak0_demo.pak` exists | In the `.pdx` |
 | --- | --- | --- |
-| `PD_RELEASE=ON` | yes | `id1/pak0.pak` is `pak0_demo.pak`; there is no `pak0_demo.pak`, no `id1/pak1.pak` (the registered episodes), no `id1/music` and no other game folder (mods, mission packs: a folder with a `.pak`, `progs.dat`, `maps/`, `progs/`, `gfx/` or `sound/`, as the [Mods menu](port/mods.md) sees them) |
+| `PD_RELEASE=ON` | yes | `id1/pak0.pak` is `pak0_demo.pak`; there is no `pak0_demo.pak`, no `id1/pak1.pak` (the registered episodes), no `id1/music` and no other game folder (mods, mission packs: a folder with a `.pak`, `progs.dat`, `maps/`, `progs/`, `gfx/` or `sound/`, as the [Mods menu](port/mods.md) sees them) except `qpe/`, cut down to the files and map textures whose originals the shareware has (`tools/qpe/qpepatch.py`, needs Python 3; see [qpe](port/qpe.md#the-shareware-part-and-the-patch)) |
 | `PD_RELEASE=ON` | no | `id1/pak0.pak`, `id1/music` and the game folders as in `Source/` |
 | `PD_RELEASE=OFF` (default) | either | `id1/pak0.pak` as in `Source/id1/`; `pak0_demo.pak` is deleted from the `.pdx` |
+
+In every build any `<game>/config.cfg` (a PC install's `id1` folder has one) is deleted from the `.pdx` too: on a fresh install
+it would be read after the port's option defaults (see [Settings](settings.md)) and override them. The game writes its own
+`config.cfg` into its Data folder.
 
 ```shell
 cmake -DPDX=build-dev/quake_DEVICE.pdx -DRELEASE=ON -P port/boards/playdate/pdx_pak.cmake   # by hand, on a built .pdx

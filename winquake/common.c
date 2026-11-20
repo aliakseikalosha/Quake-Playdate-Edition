@@ -1067,6 +1067,7 @@ QUAKE FILESYSTEM
 */
 
 int     com_filesize;
+int     com_filepos;    // where the file COM_FindFile found starts in its handle (a pak: its offset)
 
 
 //
@@ -1271,6 +1272,7 @@ int COM_FindFile (char *filename, int *handle, FILE **file)
 							fseek (*file, pak->files[i].filepos, SEEK_SET);
 					}
 					com_filesize = pak->files[i].filelen;
+					com_filepos = pak->files[i].filepos;
 					return com_filesize;
 				}
 		}
@@ -1312,6 +1314,7 @@ int COM_FindFile (char *filename, int *handle, FILE **file)
 
 			Sys_Printf ("FindFile: %s\n",netpath);
 			com_filesize = Sys_FileOpenRead (netpath, &i);
+			com_filepos = 0;
 			if (handle)
 				*handle = i;
 			else
@@ -1622,6 +1625,7 @@ char *COM_GameTitle (char *dir)
 		{"mg1", "Dimension of the Machine"},
 		{"impel", "Abyss of Pandemonium"},
 		{"as", "Aftershock"},
+		{"qpe", "Quake: Playdate Edition"},	// this port's own mod: art redrawn for the 1-bit LCD (docs/port/qpe.md)
 	};
 	int		i;
 
